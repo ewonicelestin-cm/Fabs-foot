@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">FAB-FOOT</string>
+    <string name="title_activity_main">FAB-FOOT</string>
+    <string name="package_name">com.fabfoot.ia</string>
+    <string name="custom_url_scheme">com.fabfoot.ia</string>
+</resources>

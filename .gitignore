@@ -1,0 +1,17 @@
+node_modules
+dist
+.env
+.env.local
+.env.*.local
+*.log
+.vercel
+*.vsix
+*.7z
+*.rar
+*.zip
+.idea/
+android/.gradle/
+android/app/build/
+.artifacts/
+
+
