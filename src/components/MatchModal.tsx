@@ -1,7 +1,7 @@
 import React from "react";
 import { AnalyzedMatch } from "../types";
-import { AlertCircle, Users, Activity, Newspaper } from "lucide-react";
-import { getFlagUrl } from "../services/api";
+import { AlertCircle, Users, Activity, Newspaper, ShieldAlert, CheckCircle2, BarChart, Calendar, Trophy, CheckSquare } from "lucide-react";
+import { getFlagUrl, getForm } from "../services/api";
 
 interface MatchModalProps {
   selected: AnalyzedMatch;
@@ -13,6 +13,14 @@ export const MatchModal: React.FC<MatchModalProps> = ({
   onClose,
 }) => {
   const flag = getFlagUrl(selected.match.strCountry);
+  const homeForm = getForm(selected.home);
+  const awayForm = getForm(selected.away);
+
+  const hasEnoughDataHome = selected.home.played >= 3;
+  const hasEnoughDataAway = selected.away.played >= 3;
+
+  const homeAvgGoals = (selected.home.goalsFor / Math.max(1, selected.home.played)).toFixed(2);
+  const awayAvgGoals = (selected.away.goalsFor / Math.max(1, selected.away.played)).toFixed(2);
 
   return (
     <div className="modal" onClick={onClose}>
@@ -24,21 +32,33 @@ export const MatchModal: React.FC<MatchModalProps> = ({
           ✕
         </button>
 
+        {/* Section 1: Données Officielles API */}
         <div className="modal-header-main">
-          <h2>Analyse du match</h2>
+          <h2>Fiche Détaillée & Officielle du Match</h2>
           <span className="status-badge">{selected.match.strStatus || "Programmé"}</span>
         </div>
 
-        <h3>
-          {selected.match.strHomeTeam} VS {selected.match.strAwayTeam}
+        <div style={{ background: 'rgba(255,255,255,0.03)', padding: '12px 16px', borderRadius: '10px', margin: '15px 0', border: '1px solid var(--line)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '13px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <Trophy size={16} style={{ color: 'var(--primary)' }} />
+            <strong>{selected.match.strLeague || selected.competition.label}</strong>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--text-muted)' }}>
+            <Calendar size={16} />
+            <span>{selected.match.dateEvent || "Aujourd'hui"} • {selected.match.strTime || "--:--"}</span>
+          </div>
+        </div>
+
+        <h3 style={{ textAlign: 'center', fontSize: '22px', margin: '20px 0' }}>
+          {selected.match.strHomeTeam} <span style={{ color: '#0ea5e9', fontSize: '16px' }}>VS</span> {selected.match.strAwayTeam}
         </h3>
 
         <div className="competition-chip detail-competition">
           <div className="competition-info">
             {flag && <img src={flag} alt="" className="country-flag" />}
-            <strong>{selected.match.strLeague || selected.competition.label}</strong>
+            <strong>Contexte de l'enjeu</strong>
           </div>
-          <span>Niveau d’enjeu : {selected.competition.importance}/100</span>
+          <span>Importance : {selected.competition.importance}/100</span>
         </div>
 
         <p className="competition-insight textual">
@@ -46,131 +66,97 @@ export const MatchModal: React.FC<MatchModalProps> = ({
         </p>
 
         <div className="modal-sections">
+
+          {/* Section 2: Comparaison Visuelle & Statistiques Calculées */}
           <section className="modal-section">
             <div className="section-title">
-              <Activity size={18} />
-              <h4>Étude des Buts Probables (Expertise IA)</h4>
+              <BarChart size={18} />
+              <h4>Comparaison Visuelle & Statistiques Calculées</h4>
             </div>
 
-            <div className="goals-study-grid">
-              <div className="study-rubric">
-                <div className="rubric-header">Rubrique I : 1ère Mi-temps (1H)</div>
-                <div className="stat-row"><span>+0.5 but en 1H :</span> <strong>{selected.prediction.halfTimeStudy?.probOver05}%</strong></div>
-                <div className="stat-row"><span>+1.5 buts en 1H :</span> <strong>{selected.prediction.halfTimeStudy?.probOver15}%</strong></div>
-                <div className="stat-row"><span>Score HT probable :</span> <strong>{selected.prediction.halfTimeStudy?.likelyScore}</strong></div>
+            {!hasEnoughDataHome || !hasEnoughDataAway ? (
+              <div style={{ background: 'rgba(212, 175, 184, 0.1)', border: '1px solid var(--danger)', padding: '12px', borderRadius: '8px', fontSize: '13px', color: 'var(--danger)', display: 'flex', gap: '10px', alignItems: 'center' }}>
+                <ShieldAlert size={18} />
+                <span><strong>Données Insuffisantes :</strong> Moins de 3 matchs enregistrés pour l'une des équipes. Certaines métriques comparatives ont été désactivées.</span>
+              </div>
+            ) : null}
+
+            {/* Visual comparison bars */}
+            <div style={{ background: 'rgba(0,0,0,0.2)', padding: '16px', borderRadius: '12px', marginBottom: '15px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', marginBottom: '6px', fontWeight: 'bold' }}>
+                <span>{selected.match.strHomeTeam} ({homeForm}%)</span>
+                <span>Indice de Forme Comparé</span>
+                <span>{selected.match.strAwayTeam} ({awayForm}%)</span>
+              </div>
+              <div style={{ display: 'flex', height: '10px', background: 'rgba(255,255,255,0.1)', borderRadius: '5px', overflow: 'hidden' }}>
+                <div style={{ width: `${homeForm}%`, background: '#1683d8', transition: 'width 0.5s' }} />
+                <div style={{ width: `${awayForm}%`, background: '#0ea5e9', opacity: 0.7, transition: 'width 0.5s' }} />
+              </div>
+            </div>
+
+            <div className="detail-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
+              <div className="stat-card">
+                <strong>{selected.match.strHomeTeam}</strong>
+                <div className="stat-row"><span>Matchs analysés :</span> <span>{selected.home.played}</span></div>
+                <div className="stat-row"><span>Moyenne buts / match :</span> <strong>{homeAvgGoals}</strong></div>
+                <div className="stat-row"><span>Bilan (V / N / D) :</span> <span>{selected.home.wins} / {selected.home.draws} / {selected.home.losses}</span></div>
               </div>
 
-              <div className="study-rubric">
-                <div className="rubric-header">Rubrique II : 2ème Mi-temps (2H)</div>
-                <div className="stat-row"><span>Intensité offensive :</span> <strong>{selected.prediction.secondHalfStudy?.intensity}</strong></div>
-                <div className="stat-row"><span>Probabilité but en 2H :</span> <strong>{selected.prediction.secondHalfStudy?.probGoals}%</strong></div>
+              <div className="stat-card">
+                <strong>{selected.match.strAwayTeam}</strong>
+                <div className="stat-row"><span>Matchs analysés :</span> <span>{selected.away.played}</span></div>
+                <div className="stat-row"><span>Moyenne buts / match :</span> <strong>{awayAvgGoals}</strong></div>
+                <div className="stat-row"><span>Bilan (V / N / D) :</span> <span>{selected.away.wins} / {selected.away.draws} / {selected.away.losses}</span></div>
               </div>
             </div>
-
-            <div className="verdict-bar">
-               <span>Verdict Volume : </span>
-               <strong>{selected.prediction.over25 === "Oui" ? "MATCH OUVERT (+2.5)" : "MATCH FERMÉ (-2.5)"}</strong>
-            </div>
           </section>
 
-          <section className="modal-section">
-            <div className="section-title">
-              <Activity size={18} />
-              <h4>Statistiques Historiques (10 derniers matchs)</h4>
-            </div>
-            <div className="detail-grid">
-              {selected.home.played > 0 ? (
-                <div className="stat-card">
-                  <strong>{selected.match.strHomeTeam}</strong>
-                  <div className="stat-row"><span>Matchs :</span> <span>{selected.home.played}</span></div>
-                  <div className="stat-row"><span>Victoires :</span> <span>{selected.home.wins}</span></div>
-                  <div className="stat-row"><span>Nuls :</span> <span>{selected.home.draws}</span></div>
-                  <div className="stat-row"><span>Défaites :</span> <span>{selected.home.losses}</span></div>
-                  <div className="stat-row"><span>Buts :</span> <span>{selected.home.goalsFor} : {selected.home.goalsAgainst}</span></div>
-                </div>
-              ) : (
-                <div className="stat-card empty"><strong>{selected.match.strHomeTeam}</strong><p>Pas de données disponibles</p></div>
-              )}
-
-              {selected.away.played > 0 ? (
-                <div className="stat-card">
-                  <strong>{selected.match.strAwayTeam}</strong>
-                  <div className="stat-row"><span>Matchs :</span> <span>{selected.away.played}</span></div>
-                  <div className="stat-row"><span>Victoires :</span> <span>{selected.away.wins}</span></div>
-                  <div className="stat-row"><span>Nuls :</span> <span>{selected.away.draws}</span></div>
-                  <div className="stat-row"><span>Défaites :</span> <span>{selected.away.losses}</span></div>
-                  <div className="stat-row"><span>Buts :</span> <span>{selected.away.goalsFor} : {selected.away.goalsAgainst}</span></div>
-                </div>
-              ) : (
-                <div className="stat-card empty"><strong>{selected.match.strAwayTeam}</strong><p>Pas de données disponibles</p></div>
-              )}
-            </div>
-          </section>
-
-          <section className="modal-section">
-            <div className="section-title">
-              <AlertCircle size={18} />
-              <h4>Statistiques en Direct & Avancées</h4>
-            </div>
-            <div className="empty-state-modal">
-              <p>Les statistiques détaillées (tirs, possession, corners, etc.) ne sont pas disponibles en temps réel pour ce championnat via l'API actuelle.</p>
-            </div>
-          </section>
-
+          {/* Section 3: Compositions & Données Manquantes (Sans valeurs fictives) */}
           <section className="modal-section">
             <div className="section-title">
               <Users size={18} />
-              <h4>Compositions & Absences</h4>
+              <h4>Compositions Officielles & Absences</h4>
             </div>
             <div className="empty-state-modal">
-              <p>Compositions non disponibles. Celles-ci sont généralement publiées 60 minutes avant le coup d'envoi.</p>
+              <ShieldAlert size={18} style={{ color: 'var(--warning)', marginBottom: '6px' }} />
+              <p><strong>Données non disponibles :</strong> Les feuilles de match et compositions officielles ne sont pas fournies par l'API pour cette rencontre. Aucune composition fictive n'est générée.</p>
             </div>
           </section>
 
+          {/* Section 4: Marchés de Pronostics Pris en Charge */}
           <section className="modal-section">
             <div className="section-title">
-              <Newspaper size={18} />
-              <h4>Actualités & IA Insights</h4>
+              <CheckSquare size={18} />
+              <h4>Marchés de Pronostics Pris en Charge</h4>
             </div>
-            <div className="news-container">
-              {selected.news && selected.news.length > 0 ? (
-                selected.news.map((item, idx) => (
-                  <div key={idx} className="news-item">
-                    <div className="news-header">
-                      <strong>{item.title}</strong>
-                      <small>{item.date}</small>
-                    </div>
-                    <p>{item.content}</p>
-                  </div>
-                ))
-              ) : (
-                <div className="empty-state-modal">
-                  <p>Aucune actualité majeure signalée pour cette rencontre aujourd'hui.</p>
-                </div>
-              )}
+
+            <div className="markets" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+              <div style={{ padding: '12px', background: 'var(--panel)', borderRadius: '8px' }}>
+                <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>1N2 (Vainqueur)</span>
+                <strong style={{ display: 'block', fontSize: '15px', color: 'var(--success)', marginTop: '4px' }}>{selected.prediction.winner}</strong>
+              </div>
+              <div style={{ padding: '12px', background: 'var(--panel)', borderRadius: '8px' }}>
+                <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Double Chance</span>
+                <strong style={{ display: 'block', fontSize: '15px', color: 'var(--primary)', marginTop: '4px' }}>{selected.prediction.doubleChance}</strong>
+              </div>
+              <div style={{ padding: '12px', background: 'var(--panel)', borderRadius: '8px' }}>
+                <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Les 2 équipes marquent (BTTS)</span>
+                <strong style={{ display: 'block', fontSize: '15px', color: 'var(--primary)', marginTop: '4px' }}>{selected.prediction.btts}</strong>
+              </div>
+              <div style={{ padding: '12px', background: 'var(--panel)', borderRadius: '8px' }}>
+                <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Plus de 2.5 Buts</span>
+                <strong style={{ display: 'block', fontSize: '15px', color: 'var(--primary)', marginTop: '4px' }}>{selected.prediction.over25}</strong>
+              </div>
             </div>
           </section>
+
         </div>
 
+        {/* Section 5: Estimations & Probabilités IA (Séparées clairement) */}
         <div className="final-prediction-box">
           <div className="prediction-header">
-            <strong>🤖 PRONOSTIC IA</strong>
+            <strong>🤖 ESTIMATIONS & PROBABILITÉS CALCULÉES (IA)</strong>
             <span className="confidence-label">Confiance : {selected.prediction.confidence}%</span>
-          </div>
-
-          <div className="prediction-results">
-            <div className="res-item">
-              <small>VAINQUEUR</small>
-              <strong>{selected.prediction.winner}</strong>
-            </div>
-            <div className="res-item">
-              <small>SCORE EXACT</small>
-              <strong>{selected.prediction.score}</strong>
-            </div>
-            <div className="res-item">
-              <small>PROBABILITÉ</small>
-              <strong>{selected.prediction.confidence}%</strong>
-            </div>
           </div>
 
           {selected.prediction.probabilities && (
@@ -191,7 +177,7 @@ export const MatchModal: React.FC<MatchModalProps> = ({
           )}
 
           <div className="prediction-footer">
-            <span>Marché : {selected.prediction.marketLabel}</span>
+            <span>Recommandation du modèle :</span>
             <p className="rec-text">{selected.prediction.recommendation}</p>
           </div>
         </div>

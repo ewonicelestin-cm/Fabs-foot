@@ -1,14 +1,16 @@
 import React from "react";
 import { AnalyzedMatch } from "../types";
 import { getForm, getFlagUrl } from "../services/api";
-import { Info } from "lucide-react";
+import { Info, Star } from "lucide-react";
 
 interface MatchCardProps {
   item: AnalyzedMatch;
   onSelect: (item: AnalyzedMatch) => void;
+  isFavorite?: boolean;
+  onToggleFavorite?: (matchId: string) => void;
 }
 
-export const MatchCard: React.FC<MatchCardProps> = ({ item, onSelect }) => {
+export const MatchCard: React.FC<MatchCardProps> = ({ item, onSelect, isFavorite, onToggleFavorite }) => {
   const p = item.prediction;
   const flag = getFlagUrl(item.match.strCountry);
 
@@ -23,9 +25,27 @@ export const MatchCard: React.FC<MatchCardProps> = ({ item, onSelect }) => {
           <span className="dot">•</span>
           <span>{item.match.strTime ?? "--:--"}</span>
         </div>
-        <span className={`status-pill ${item.match.strStatus === 'Match Finished' ? 'finished' : 'upcoming'}`}>
-          {item.match.strStatus === 'Match Finished' ? 'Terminé' : 'À venir'}
-        </span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          {onToggleFavorite && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                onToggleFavorite(item.match.idEvent);
+              }}
+              style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: '2px' }}
+              title={isFavorite ? "Retirer des favoris" : "Ajouter aux favoris"}
+            >
+              <Star
+                size={18}
+                fill={isFavorite ? "#fbbf24" : "none"}
+                color={isFavorite ? "#fbbf24" : "var(--text-muted)"}
+              />
+            </button>
+          )}
+          <span className={`status-pill ${item.match.strStatus === 'Match Finished' ? 'finished' : 'upcoming'}`}>
+            {item.match.strStatus === 'Match Finished' ? 'Terminé' : 'À venir'}
+          </span>
+        </div>
       </div>
 
       <div className="competition-chip">

@@ -791,3 +791,203 @@ button {
     flex-direction: column;
   }
 }
+
+/* Light / Dark Theme Variables */
+:root[data-theme="light"] {
+  --bg: #f4f7fa;
+  --bg-strong: #ffffff;
+  --panel: #ffffff;
+  --panel-strong: #f0f4f8;
+  --panel-soft: rgba(255, 255, 255, 0.95);
+  --line: rgba(0, 0, 0, 0.08);
+  --line-strong: rgba(0, 0, 0, 0.15);
+  --text: #1a232c;
+  --text-soft: #33414e;
+  --text-muted: #64748b;
+  --primary: #0f172a;
+  --primary-strong: #1e293b;
+  --accent: rgba(0, 0, 0, 0.04);
+  --success: #15803d;
+  --warning: #b45309;
+  --danger: #b91c1c;
+  --shadow: rgba(0, 0, 0, 0.08);
+}
+
+:root[data-theme="dark"] {
+  --bg: #0b1116;
+  --bg-strong: #070b10;
+  --panel: #111a20;
+  --panel-strong: #0b141b;
+  --panel-soft: rgba(18, 27, 34, 0.9);
+  --line: rgba(194, 209, 220, 0.14);
+  --line-strong: rgba(224, 232, 238, 0.22);
+  --text: #edf3f8;
+  --text-soft: #c7d3dd;
+  --text-muted: #8d9aa6;
+  --primary: #dfe7ee;
+  --primary-strong: #c4ced8;
+  --accent: rgba(228, 234, 238, 0.08);
+  --success: #bfdcc9;
+  --warning: #d8d2be;
+  --danger: #d4afb8;
+  --shadow: rgba(10, 15, 18, 0.42);
+}
+
+/* Dashboard Controls (Search & Filters) */
+.dashboard-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  margin-bottom: 25px;
+}
+
+.search-box {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 18px;
+  border-radius: 12px;
+  background: var(--panel);
+  border: 1px solid var(--line-strong);
+  color: var(--text-muted);
+  box-shadow: 0 4px 12px var(--shadow);
+}
+
+.search-box input {
+  width: 100%;
+  background: transparent;
+  border: none;
+  color: var(--text);
+  font-size: 15px;
+  outline: none;
+}
+
+.search-box input::placeholder {
+  color: var(--text-muted);
+}
+
+.filter-tabs {
+  display: flex;
+  gap: 10px;
+  overflow-x: auto;
+  padding-bottom: 5px;
+}
+
+.filter-tab {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  border-radius: 10px;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  color: var(--text-soft);
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+  transition: all 0.2s ease;
+}
+
+.filter-tab:hover {
+  background: var(--accent);
+  color: var(--text);
+}
+
+.filter-tab.active {
+  background: linear-gradient(135deg, #1683d8, #0ea5e9);
+  color: white;
+  border-color: transparent;
+  box-shadow: 0 4px 12px rgba(14, 165, 233, 0.3);
+}
+
+.pro-badge {
+  font-size: 10px;
+  padding: 2px 6px;
+  background: rgba(14, 165, 233, 0.2);
+  color: #0ea5e9;
+  border-radius: 4px;
+  vertical-align: middle;
+  margin-left: 6px;
+}
+
+.theme-toggle-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  background: var(--panel);
+  border: 1px solid var(--line-strong);
+  color: var(--text);
+  transition: transform 0.2s ease;
+}
+
+.theme-toggle-btn:hover {
+  transform: scale(1.05);
+}
+
+/* Rubric Navigation Bar */
+.rubric-nav {
+  background: var(--panel);
+  border-bottom: 1px solid var(--line);
+  padding: 12px 5%;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  backdrop-filter: blur(14px);
+}
+
+.rubric-nav-container {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  max-width: 1400px;
+  margin: auto;
+  scrollbar-width: none;
+}
+
+.rubric-nav-container::-webkit-scrollbar {
+  display: none;
+}
+
+.rubric-tab {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+  transition: all 0.2s ease;
+}
+
+.rubric-tab:hover {
+  background: var(--accent);
+  color: var(--text);
+}
+
+.rubric-tab.active {
+  background: linear-gradient(135deg, #1683d8, #0ea5e9);
+  color: white;
+  box-shadow: 0 4px 12px rgba(14, 165, 233, 0.25);
+}
+
+.rubric-view-header {
+  margin-bottom: 25px;
+}
+
+.rubric-view-header h2 {
+  font-size: 26px;
+  margin-bottom: 6px;
+  color: var(--text);
+}
+
+.rubric-view-header p {
+  color: var(--text-muted);
+  font-size: 14px;
+}
+

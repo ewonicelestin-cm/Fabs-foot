@@ -202,6 +202,25 @@ function poisson(lambda: number, k: number): number {
 }
 
 export function analyzeMatch(home: TeamStats, away: TeamStats): Prediction {
+  if (home.played === 0 || away.played === 0) {
+    return {
+      winner: "Nul",
+      confidence: 50,
+      valueScore: 50,
+      marketLabel: "DONNÉES INSUFFISANTES",
+      isPremium: false,
+      theoreticalOdds: 2.0,
+      doubleChance: "1X / X2",
+      btts: "Non",
+      over15: "Non",
+      over25: "Non",
+      under35: "Oui",
+      score: "1-1",
+      recommendation: "Analyse indisponible : données insuffisantes",
+      probabilities: { home: 33, draw: 34, away: 33 }
+    };
+  }
+
   const homeForm = getForm(home);
   const awayForm = getForm(away);
 
