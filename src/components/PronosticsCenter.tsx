@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { AnalyzedMatch } from "../types";
 import { Target, Filter, ShieldAlert, CheckCircle, HelpCircle } from "lucide-react";
 import { getForm } from "../services/api";
+import { getActualMatchScore, getActualMatchScoreLabel, getMatchStatusCategory, getMatchStatusLabel } from "../services/matchStatus";
 
 interface PronosticsCenterProps {
   matches: AnalyzedMatch[];
@@ -37,9 +38,7 @@ export const PronosticsCenter: React.FC<PronosticsCenterProps> = ({ matches, onS
 
     // Status filter
     if (statusFilter !== "ALL") {
-      const status = item.match.strStatus || "Upcoming";
-      if (statusFilter === "FINISHED" && status !== "Match Finished") return false;
-      if (statusFilter === "UPCOMING" && status === "Match Finished") return false;
+      if (getMatchStatusCategory(item.match) !== statusFilter.toLowerCase()) return false;
     }
 
     // Market filter
@@ -112,6 +111,7 @@ export const PronosticsCenter: React.FC<PronosticsCenterProps> = ({ matches, onS
           >
             <option value="ALL">Tous les statuts</option>
             <option value="UPCOMING">À venir</option>
+            <option value="LIVE">En direct</option>
             <option value="FINISHED">Terminés</option>
           </select>
         </div>
@@ -122,8 +122,8 @@ export const PronosticsCenter: React.FC<PronosticsCenterProps> = ({ matches, onS
       <div style={{ background: 'rgba(14, 165, 233, 0.1)', border: '1px solid rgba(14, 165, 233, 0.3)', padding: '15px', borderRadius: '10px', marginBottom: '25px', fontSize: '13px', color: 'var(--text-soft)', display: 'flex', gap: '12px', alignItems: 'flex-start' }}>
         <HelpCircle size={20} style={{ color: '#0ea5e9', flexShrink: 0, marginTop: '2px' }} />
         <div>
-          <strong>Politique de Transparence Statistique :</strong> Les probabilités affichées proviennent exclusivement du calcul algorithmique (Loi de Poisson sur l'historique officiel disponible).
-          <br /><em>Données manquantes transparentes :</em> Les statistiques de corners en direct et compositions officielles temps réel ne sont pas garanties par l'API publique tierce et sont signalées le cas échéant. Zéro cote ou résultat réel n'est inventé.
+          <strong>Politique de Transparence Statistique :</strong> Les pronostics et projections de corners/tirs cadrés sont calculés exclusivement par le modèle (loi de Poisson et forme récente).
+          <br /><em>Données manquantes transparentes :</em> Si l’historique vérifié manque, une estimation de secours sur base neutre est affichée et signalée comme moins fiable. Les projections ne sont pas des statistiques en direct.
         </div>
       </div>
 
@@ -133,15 +133,17 @@ export const PronosticsCenter: React.FC<PronosticsCenterProps> = ({ matches, onS
         <div className="prediction-grid">
           {filteredMatches.map((item) => {
             const p = item.prediction;
-            const homeForm = getForm(item.home);
-            const awayForm = getForm(item.away);
+            const homeForm = item.home.played > 0 ? getForm(item.home) : null;
+            const awayForm = item.away.played > 0 ? getForm(item.away) : null;
+            const statusCategory = getMatchStatusCategory(item.match);
+            const actualScore = getActualMatchScore(item.match);
 
             return (
               <div key={item.match.idEvent} className="prediction-card" style={{ padding: '22px' }}>
                 <div className="match-header">
                   <span>{item.match.dateEvent || "Aujourd'hui"} • {item.match.strTime || "--:--"}</span>
-                  <span className={`status-pill ${item.match.strStatus === 'Match Finished' ? 'finished' : 'upcoming'}`}>
-                    {item.match.strStatus === 'Match Finished' ? 'Résultat Réel' : 'Prédiction IA'}
+                  <span className={`status-pill ${statusCategory}`}>
+                    {getMatchStatusLabel(item.match)}
                   </span>
                 </div>
 
@@ -156,14 +158,21 @@ export const PronosticsCenter: React.FC<PronosticsCenterProps> = ({ matches, onS
                   <strong>{item.match.strAwayTeam}</strong>
                 </div>
 
+                {actualScore && (
+                  <div className="actual-match-score" aria-label={`${getActualMatchScoreLabel(item.match)} : ${actualScore}`}>
+                    <span>{getActualMatchScoreLabel(item.match)}</span>
+                    <strong>{actualScore}</strong>
+                  </div>
+                )}
+
                 {/* Statistical Factors breakdown */}
                 <div style={{ background: 'rgba(0,0,0,0.25)', padding: '12px', borderRadius: '10px', marginBottom: '15px', fontSize: '12px' }}>
                   <strong style={{ display: 'block', color: 'var(--primary)', marginBottom: '6px' }}>Facteurs Statistiques Analysés :</strong>
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px', color: 'var(--text-muted)' }}>
-                    <div>Forme Domicile : <strong style={{ color: 'var(--text)' }}>{homeForm}%</strong></div>
-                    <div>Forme Extérieur : <strong style={{ color: 'var(--text)' }}>{awayForm}%</strong></div>
-                    <div>Buts marqués (dom) : <strong style={{ color: 'var(--text)' }}>{item.home.goalsFor}</strong></div>
-                    <div>Buts marqués (ext) : <strong style={{ color: 'var(--text)' }}>{item.away.goalsFor}</strong></div>
+                    <div>Forme Domicile : <strong style={{ color: 'var(--text)' }}>{homeForm === null ? "N/D" : `${homeForm}%`}</strong></div>
+                    <div>Forme Extérieur : <strong style={{ color: 'var(--text)' }}>{awayForm === null ? "N/D" : `${awayForm}%`}</strong></div>
+                    <div>Buts marqués (dom) : <strong style={{ color: 'var(--text)' }}>{item.home.played ? item.home.goalsFor : "N/D"}</strong></div>
+                    <div>Buts marqués (ext) : <strong style={{ color: 'var(--text)' }}>{item.away.played ? item.away.goalsFor : "N/D"}</strong></div>
                   </div>
                 </div>
 
@@ -184,10 +193,24 @@ export const PronosticsCenter: React.FC<PronosticsCenterProps> = ({ matches, onS
                   <div><span>Plus de 2.5 buts</span><strong>{p.over25}</strong></div>
                 </div>
 
-                {/* Missing Data Transparent Disclosure */}
-                <div style={{ marginTop: '12px', fontSize: '11px', color: 'var(--text-muted)', background: 'rgba(255,255,255,0.02)', padding: '8px', borderRadius: '6px' }}>
-                  ⚠️ <em>Données de corners et tirs :</em> Non disponibles via l'API actuelle pour cette rencontre.
-                </div>
+                {p.metricProjections ? (
+                  <div className="metric-projections">
+                    <strong>Projections IA · tirs cadrés & corners</strong>
+                    <div className="metric-projection-row">
+                      <span>Tirs cadrés</span>
+                      <span>{p.metricProjections.shotsOnTarget.home} – {p.metricProjections.shotsOnTarget.away} <small>({p.metricProjections.shotsOnTarget.rangeMin}–{p.metricProjections.shotsOnTarget.rangeMax} au total)</small></span>
+                    </div>
+                    <div className="metric-projection-row">
+                      <span>Corners</span>
+                      <span>{p.metricProjections.corners.home} – {p.metricProjections.corners.away} <small>({p.metricProjections.corners.rangeMin}–{p.metricProjections.corners.rangeMax} au total)</small></span>
+                    </div>
+                    <small>
+                      {p.dataBasis === "verified"
+                        ? "Estimations fondées sur les buts et la forme récents ; ce ne sont pas des statistiques en direct."
+                        : "Estimation de secours avec base neutre faute d’historique vérifié complet ; ce ne sont pas des statistiques en direct."}
+                    </small>
+                  </div>
+                ) : null}
 
                 <button className="details" onClick={() => onSelect(item)} style={{ marginTop: '15px' }}>
                   <span>Voir l'analyse détaillée</span>

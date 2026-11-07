@@ -10,7 +10,27 @@ export type Match = {
   strThumb?: string;
   strVideo?: string;
   strStatus?: string;
+  intHomeScore?: number | string | null;
+  intAwayScore?: number | string | null;
   strDescriptionEN?: string;
+  sourceUrl?: string;
+};
+
+export type OfficialDataSource = {
+  id: string;
+  label: string;
+  url: string;
+  status: "ok" | "unavailable" | "no_public_match_data";
+  matchCount: number;
+  detail?: string;
+};
+
+export type OfficialMatchData = {
+  updatedAt: string | null;
+  coverage: "complete" | "partial" | "unavailable";
+  sources: OfficialDataSource[];
+  matches: Match[];
+  teamStats: Record<string, TeamStats>;
 };
 
 export type AdvancedStats = {
@@ -44,10 +64,19 @@ export type TeamStats = {
   goalsAgainst: number;
 };
 
+export type MatchMetricProjection = {
+  home: number;
+  away: number;
+  total: number;
+  rangeMin: number;
+  rangeMax: number;
+};
+
 export type Prediction = {
   winner: string;
   confidence: number;
   valueScore: number;
+  dataBasis: "verified" | "partial" | "fallback";
   marketLabel: string;
   doubleChance: string;
   btts: string;
@@ -58,7 +87,7 @@ export type Prediction = {
   recommendation: string;
   isPremium: boolean;
   theoreticalOdds?: number;
-  probabilities?: {
+  probabilities: {
     home: number;
     draw: number;
     away: number;
@@ -71,6 +100,10 @@ export type Prediction = {
   secondHalfStudy?: {
     intensity: 'HAUTE' | 'MODÉRÉE' | 'BASSE';
     probGoals: number;
+  };
+  metricProjections: {
+    shotsOnTarget: MatchMetricProjection;
+    corners: MatchMetricProjection;
   };
 };
 

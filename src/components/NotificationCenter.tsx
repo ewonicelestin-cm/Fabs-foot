@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Bell, BellOff, Settings, Check, Trash2, Info } from "lucide-react";
 import { AnalyzedMatch } from "../types";
+import { getMatchStatusCategory } from "../services/matchStatus";
 
 export interface AppNotification {
   id: string;
@@ -75,7 +76,8 @@ export const NotificationCenter: React.FC<NotificationCenterProps> = ({ matches,
       // Check for match status events from actual API data
       for (const m of matches) {
         const status = m.match.strStatus || "Programmé";
-        if (status === "Match Finished") {
+        const statusCategory = getMatchStatusCategory(m.match);
+        if (statusCategory === "finished") {
           const finishId = `finish-${m.match.idEvent}`;
           if (preferences.finishAlerts && !existingIds.has(finishId)) {
             newNotifs.unshift({
@@ -88,7 +90,7 @@ export const NotificationCenter: React.FC<NotificationCenterProps> = ({ matches,
             });
             added = true;
           }
-        } else if (status === "Not Started" || status === "Programmé") {
+        } else if (statusCategory === "upcoming") {
           const startId = `start-${m.match.idEvent}`;
           if (preferences.startAlerts && !existingIds.has(startId)) {
             newNotifs.unshift({

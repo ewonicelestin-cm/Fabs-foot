@@ -1,199 +1,224 @@
-import React, { useState, useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { AnalyzedMatch } from "../types";
-import { Scale, Clock, ShieldCheck, BarChart3, HelpCircle, CheckCircle2 } from "lucide-react";
-import { getForm } from "../services/api";
+import { ExternalLink, Scale, ShieldCheck } from "lucide-react";
+import { getMatchStatusLabel } from "../services/matchStatus";
 
 interface PredictionComparatorProps {
   matches: AnalyzedMatch[];
   onSelect: (item: AnalyzedMatch) => void;
+  lastUpdated: string;
 }
 
-interface TimestampedPrediction {
-  idEvent: string;
-  homeTeam: string;
-  awayTeam: string;
-  predictedWinner: string;
-  confidence: number;
-  timestamp: string;
-  status: string;
-}
+type ExpertPick = "" | "Domicile" | "Nul" | "Extérieur";
 
-export const PredictionComparator: React.FC<PredictionComparatorProps> = ({ matches, onSelect }) => {
-  const [selectedMatchId, setSelectedMatchId] = useState<string>(matches[0]?.match.idEvent || "");
-  const [timestampedPredictions, setTimestampedPredictions] = useState<TimestampedPrediction[]>(() => {
+const AI_FALLBACK_VALUE = "__ai_fallback__";
+
+const expertSources = [
+  {
+    id: "football-whispers",
+    name: "Football Whispers",
+    description: "Conseils et analyses publiés par leurs experts",
+    url: "https://footballwhispers.com/blog/todays-betting-tips/",
+  },
+  {
+    id: "footballpredictions",
+    name: "FootballPredictions.NET",
+    description: "Prédictions quotidiennes et analyses statistiques",
+    url: "https://footballpredictions.net/",
+  },
+  {
+    id: "forebet",
+    name: "Forebet",
+    description: "Prévisions statistiques par match et compétition",
+    url: "https://www.forebet.com/en/football-tips-and-predictions-for-today",
+  },
+  {
+    id: "predictz",
+    name: "PredictZ",
+    description: "Pronostics quotidiens par championnat",
+    url: "https://www.predictz.com/predictions/",
+  },
+];
+
+export const PredictionComparator: React.FC<PredictionComparatorProps> = ({
+  matches,
+  onSelect,
+  lastUpdated,
+}) => {
+  const [selectedMatchId, setSelectedMatchId] = useState(matches[0]?.match.idEvent || "");
+  const [expertPicks, setExpertPicks] = useState<Record<string, Record<string, ExpertPick>>>(() => {
     try {
-      const saved = localStorage.getItem("fabs_foot_timestamped_preds");
-      return saved ? JSON.parse(saved) : [];
-    } catch {
-      return [];
+      const saved = localStorage.getItem("fabs_foot_expert_picks");
+      return saved ? JSON.parse(saved) : {};
+    } catch (error) {
+      console.error("Impossible de lire les sélections d’experts enregistrées.", error);
+      return {};
     }
   });
 
-  // Automatically record timestamped predictions for loaded matches if not already recorded
   useEffect(() => {
-    if (matches.length === 0) return;
-    setTimestampedPredictions(prev => {
-      const existingIds = new Set(prev.map(p => p.idEvent));
-      const newEntries = [...prev];
-      let updated = false;
+    if (!matches.some((item) => item.match.idEvent === selectedMatchId)) {
+      setSelectedMatchId(matches[0]?.match.idEvent || "");
+    }
+  }, [matches, selectedMatchId]);
 
-      for (const m of matches) {
-        if (!existingIds.has(m.match.idEvent)) {
-          newEntries.push({
-            idEvent: m.match.idEvent,
-            homeTeam: m.match.strHomeTeam,
-            awayTeam: m.match.strAwayTeam,
-            predictedWinner: m.prediction.winner,
-            confidence: m.prediction.confidence,
-            timestamp: new Date().toISOString(),
-            status: m.match.strStatus || "Programmé"
-          });
-          updated = true;
-        }
-      }
+  useEffect(() => {
+    try {
+      localStorage.setItem("fabs_foot_expert_picks", JSON.stringify(expertPicks));
+    } catch (error) {
+      console.error("Impossible d’enregistrer les sélections d’experts.", error);
+    }
+  }, [expertPicks]);
 
-      if (updated) {
-        try {
-          localStorage.setItem("fabs_foot_timestamped_preds", JSON.stringify(newEntries));
-        } catch (e) {
-          console.error(e);
-        }
-      }
-      return newEntries;
-    });
-  }, [matches]);
-
-  const currentMatch = matches.find(m => m.match.idEvent === selectedMatchId) || matches[0];
-
-  // Performance metrics calculation with documented methodology
-  const totalRecorded = timestampedPredictions.length;
-  const hasSufficientHistory = totalRecorded >= 3;
-  const averageConfidence = totalRecorded > 0 ? Math.round(timestampedPredictions.reduce((acc, p) => acc + p.confidence, 0) / totalRecorded) : 0;
-  // Documented methodology: success rate is estimated proportionally to model confidence when history >= 3
-  const calculatedSuccessRate = hasSufficientHistory ? Math.min(88, Math.max(55, Math.round(averageConfidence * 0.92))) : 0;
+  const currentMatch = matches.find((item) => item.match.idEvent === selectedMatchId);
+  const hasVerifiedStats = currentMatch?.prediction.dataBasis === "verified";
 
   return (
     <div className="rubric-view">
       <div className="rubric-view-header">
-        <h2><Scale size={24} /> Comparateur de Pronostics & Évaluation</h2>
-        <p>Examinez plusieurs marchés par match, les probabilités estimées, les statistiques justificatives et l'historique horodaté.</p>
+        <h2><Scale size={24} /> Comparateur des sources de pronostics</h2>
+        <p>Consultez l’analyse IA Fab’s Foot et les publications récentes de sites d’experts, sans cotes.</p>
       </div>
 
-      {/* Methodology & Transparency Notice */}
-      <div style={{ background: 'var(--panel)', border: '1px solid var(--line-strong)', padding: '18px', borderRadius: '12px', marginBottom: '25px', fontSize: '13px', color: 'var(--text-soft)' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--primary)', fontWeight: 'bold', marginBottom: '6px' }}>
-          <HelpCircle size={18} style={{ color: '#0ea5e9' }} />
-          <span>Méthode de Calcul Documentée & Évaluation des Performances</span>
-        </div>
-        <p style={{ margin: '0 0 10px 0', lineHeight: '1.5' }}>
-          Les prévisions sont horodatées automatiquement dès leur chargement avant le début des rencontres. Le taux de réussite affiché est calculé statistiquement sur la base des indices de confiance historiques enregistrés dans le stockage local de l'application.
-        </p>
-        <div style={{ display: 'flex', gap: '20px', flexWrap: 'wrap', fontSize: '12px', color: 'var(--text-muted)' }}>
-          <div>📅 Prévisions horodatées : <strong style={{ color: 'var(--text)' }}>{totalRecorded}</strong></div>
-          <div>📊 Historique suffisant (≥3) : <strong style={{ color: hasSufficientHistory ? 'var(--success)' : 'var(--danger)' }}>{hasSufficientHistory ? 'Oui' : 'Non (Données insuffisantes)'}</strong></div>
-          <div>🎯 Taux de réussite calculé : <strong style={{ color: 'var(--text)' }}>{hasSufficientHistory ? `${calculatedSuccessRate}%` : 'N/A (Historique insuffisant)'}</strong></div>
-        </div>
+      <div className="source-transparency" role="note">
+        <ShieldCheck size={19} />
+        <span>
+          Les sélections tierces restent hébergées par leurs éditeurs et ne sont pas importées automatiquement.
+          Chaque source affiche un choix IA de secours jusqu’à ce que vous releviez manuellement son pronostic 1N2.
+          Le secours n’est jamais attribué au site ; les choix saisis restent dans ce navigateur.
+          Données du modèle mises à jour : {lastUpdated || "date indisponible"}.
+        </span>
       </div>
 
-      {/* Match Selector */}
-      <div style={{ marginBottom: '25px' }}>
-        <label style={{ display: 'block', fontSize: '12px', color: 'var(--text-muted)', marginBottom: '8px' }}>Sélectionner un match à comparer :</label>
-        <select
-          value={selectedMatchId}
-          onChange={(e) => setSelectedMatchId(e.target.value)}
-          style={{ width: '100%', padding: '12px', borderRadius: '10px', background: 'var(--panel)', border: '1px solid var(--line-strong)', color: 'var(--text)', fontSize: '14px' }}
-        >
-          {matches.map(m => (
-            <option key={m.match.idEvent} value={m.match.idEvent}>
-              {m.match.strHomeTeam} vs {m.match.strAwayTeam} ({m.match.strLeague || m.competition.label})
-            </option>
-          ))}
-        </select>
-      </div>
-
-      {currentMatch ? (
-        <div className="stat-card" style={{ padding: '25px', marginBottom: '30px' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-            <div>
-              <span className="status-badge">{currentMatch.match.strStatus || "Programmé"}</span>
-              <h3 style={{ margin: '8px 0 0', fontSize: '20px', color: 'var(--text)' }}>
-                {currentMatch.match.strHomeTeam} vs {currentMatch.match.strAwayTeam}
-              </h3>
-            </div>
-            <div style={{ textAlign: 'right' }}>
-              <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Compétition</span>
-              <strong style={{ display: 'block', fontSize: '13px', color: 'var(--primary)' }}>{currentMatch.match.strLeague || currentMatch.competition.label}</strong>
-            </div>
-          </div>
-
-          {/* Markets comparison table */}
-          <h4 style={{ color: 'var(--primary)', borderBottom: '1px solid var(--line)', paddingBottom: '8px', marginTop: '20px' }}>Comparatif des Marchés & Probabilités Estimées</h4>
-          <div style={{ overflowX: 'auto', marginTop: '15px' }}>
-            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px', textAlign: 'left' }}>
-              <thead>
-                <tr style={{ borderBottom: '1px solid var(--line)', color: 'var(--text-muted)' }}>
-                  <th style={{ padding: '10px' }}>Marché de Paris</th>
-                  <th style={{ padding: '10px' }}>Sélection Recommandée</th>
-                  <th style={{ padding: '10px' }}>Probabilité Estimée (IA)</th>
-                  <th style={{ padding: '10px' }}>Statistiques Justificatives</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr style={{ borderBottom: '1px solid var(--line)' }}>
-                  <td style={{ padding: '12px', fontWeight: 'bold' }}>1N2 (Vainqueur)</td>
-                  <td style={{ padding: '12px', color: 'var(--success)' }}>{currentMatch.prediction.winner}</td>
-                  <td style={{ padding: '12px' }}>{currentMatch.prediction.confidence}%</td>
-                  <td style={{ padding: '12px', color: 'var(--text-muted)', fontSize: '12px' }}>Forme Domicile ({getForm(currentMatch.home)}%) vs Extérieur ({getForm(currentMatch.away)}%)</td>
-                </tr>
-                <tr style={{ borderBottom: '1px solid var(--line)' }}>
-                  <td style={{ padding: '12px', fontWeight: 'bold' }}>Double Chance</td>
-                  <td style={{ padding: '12px', color: 'var(--primary)' }}>{currentMatch.prediction.doubleChance}</td>
-                  <td style={{ padding: '12px' }}>{Math.min(95, currentMatch.prediction.confidence + 18)}%</td>
-                  <td style={{ padding: '12px', color: 'var(--text-muted)', fontSize: '12px' }}>Sécurité renforcée sur base des stats défensives</td>
-                </tr>
-                <tr style={{ borderBottom: '1px solid var(--line)' }}>
-                  <td style={{ padding: '12px', fontWeight: 'bold' }}>Les 2 équipes marquent (BTTS)</td>
-                  <td style={{ padding: '12px', color: 'var(--primary)' }}>{currentMatch.prediction.btts}</td>
-                  <td style={{ padding: '12px' }}>{currentMatch.prediction.btts === "Oui" ? "64%" : "58%"}</td>
-                  <td style={{ padding: '12px', color: 'var(--text-muted)', fontSize: '12px' }}>Moyenne buts marqués/encaissés</td>
-                </tr>
-                <tr>
-                  <td style={{ padding: '12px', fontWeight: 'bold' }}>Plus de 2.5 Buts</td>
-                  <td style={{ padding: '12px', color: 'var(--primary)' }}>{currentMatch.prediction.over25}</td>
-                  <td style={{ padding: '12px' }}>{currentMatch.prediction.over25 === "Oui" ? "61%" : "65%"}</td>
-                  <td style={{ padding: '12px', color: 'var(--text-muted)', fontSize: '12px' }}>Analyse des xG et historique de buts</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-
-          <button className="details" onClick={() => onSelect(currentMatch)} style={{ marginTop: '20px' }}>
-            <span>Ouvrir la fiche d'analyse complète</span>
-          </button>
+      {matches.length > 0 && (
+        <div className="prediction-match-select">
+          <label htmlFor="prediction-match">Match à analyser</label>
+          <select
+            id="prediction-match"
+            value={currentMatch?.match.idEvent || ""}
+            onChange={(event) => setSelectedMatchId(event.target.value)}
+          >
+            {matches.map((item) => (
+              <option key={item.match.idEvent} value={item.match.idEvent}>
+                {item.match.strHomeTeam} vs {item.match.strAwayTeam} ({item.match.strLeague || item.competition.label})
+              </option>
+            ))}
+          </select>
         </div>
-      ) : (
-        <div className="message">Aucun match sélectionné pour la comparaison.</div>
       )}
 
-      {/* Timestamped predictions log */}
-      <h3 style={{ color: 'var(--primary)', marginTop: '30px' }}>Journal Horodaté des Prévisions Enregistrées</h3>
-      {timestampedPredictions.length === 0 ? (
-        <div className="message">Aucune prévision horodatée enregistrée.</div>
+      {currentMatch ? (
+        <>
+          <section className="expert-comparison">
+            <article className="expert-source-card ai-source-card">
+              <div className="expert-source-heading">
+                <span className="status-badge">FAB’S FOOT · IA</span>
+                <span className="expert-updated">{currentMatch.match.strTime || "Horaire à confirmer"}</span>
+              </div>
+              <h3>{currentMatch.match.strHomeTeam} <span>vs</span> {currentMatch.match.strAwayTeam}</h3>
+              <p className="expert-competition">
+                {currentMatch.match.strLeague || currentMatch.competition.label} · {getMatchStatusLabel(currentMatch.match)}
+              </p>
+              {currentMatch.prediction.probabilities && (
+                <>
+                  <div className="ai-pick">
+                    <span>{hasVerifiedStats ? "Pronostic IA · historique vérifié" : "Pronostic IA de secours · historique insuffisant"}</span>
+                    <strong>{currentMatch.prediction.winner}</strong>
+                    <span>{currentMatch.prediction.confidence}% estimation · Score indicatif {currentMatch.prediction.score}</span>
+                  </div>
+                  <div className="probability-row" aria-label="Probabilités IA">
+                    {[
+                      ["Domicile", currentMatch.prediction.probabilities.home],
+                      ["Nul", currentMatch.prediction.probabilities.draw],
+                      ["Extérieur", currentMatch.prediction.probabilities.away],
+                    ].map(([label, probability]) => (
+                      <div key={label} className="probability-item">
+                        <span>{label}</span>
+                        <strong>{probability}%</strong>
+                      </div>
+                    ))}
+                  </div>
+                  {currentMatch.prediction.metricProjections && (
+                    <div className="ai-metric-summary">
+                      <strong>Projections IA — données non live</strong>
+                      <span>Tirs cadrés : {currentMatch.prediction.metricProjections.shotsOnTarget.home}–{currentMatch.prediction.metricProjections.shotsOnTarget.away} · total {currentMatch.prediction.metricProjections.shotsOnTarget.rangeMin}–{currentMatch.prediction.metricProjections.shotsOnTarget.rangeMax}</span>
+                      <span>Corners : {currentMatch.prediction.metricProjections.corners.home}–{currentMatch.prediction.metricProjections.corners.away} · total {currentMatch.prediction.metricProjections.corners.rangeMin}–{currentMatch.prediction.metricProjections.corners.rangeMax}</span>
+                    </div>
+                  )}
+                  <button className="details" onClick={() => onSelect(currentMatch)}>
+                    Voir l’analyse IA détaillée
+                  </button>
+                </>
+              )}
+            </article>
+
+            {expertSources.map((source) => {
+              const expertPick = expertPicks[currentMatch.match.idEvent]?.[source.id] || "";
+              const comparisonPick = expertPick || currentMatch.prediction.winner;
+              const agreesWithAi = comparisonPick === currentMatch.prediction.winner;
+              return (
+              <article className="expert-source-card external-source-card" key={source.name}>
+                <div className="expert-source-heading">
+                  <span className="source-type">SOURCE EXTERNE</span>
+                  <ExternalLink size={17} aria-hidden="true" />
+                </div>
+                <h3>{source.name}</h3>
+                <p>{source.description}</p>
+                <p className="source-notice">
+                  {expertPick
+                    ? "Sélection 1N2 enregistrée manuellement pour cette source."
+                    : `Estimation IA de secours : ${currentMatch.prediction.winner}. Ce n’est pas le pronostic du site.`}
+                </p>
+                <label className="expert-pick-label">
+                  Pronostic comparé
+                  <select
+                    value={expertPick || AI_FALLBACK_VALUE}
+                    onChange={(event) => {
+                      const pick = event.currentTarget.value;
+                      if (pick === AI_FALLBACK_VALUE) {
+                        setExpertPicks((previous) => {
+                          const nextMatchPicks = { ...previous[currentMatch.match.idEvent] };
+                          delete nextMatchPicks[source.id];
+                          return { ...previous, [currentMatch.match.idEvent]: nextMatchPicks };
+                        });
+                        return;
+                      }
+                      if (pick !== "Domicile" && pick !== "Nul" && pick !== "Extérieur") return;
+                      setExpertPicks((previous) => ({
+                        ...previous,
+                        [currentMatch.match.idEvent]: {
+                          ...previous[currentMatch.match.idEvent],
+                          [source.id]: pick,
+                        },
+                      }));
+                    }}
+                  >
+                    <option value={AI_FALLBACK_VALUE}>Estimation IA de secours (pas le choix du site)</option>
+                    <option value="Domicile">Victoire domicile</option>
+                    <option value="Nul">Match nul</option>
+                    <option value="Extérieur">Victoire extérieur</option>
+                  </select>
+                </label>
+                <p className={`expert-alignment ${agreesWithAi ? "agrees" : "differs"}`}>
+                  {expertPick
+                    ? agreesWithAi
+                      ? "Même choix que l’IA"
+                      : "Choix différent de l’IA"
+                    : "Estimation IA de secours · non confirmée par le site"}
+                </p>
+                <a href={source.url} target="_blank" rel="noopener noreferrer">
+                  Consulter les pronostics du site <ExternalLink size={14} />
+                </a>
+              </article>
+            );})}
+          </section>
+          <p className="source-disclaimer">
+            Les sources externes peuvent ne pas couvrir cette rencontre. Les liens ouvrent leurs pages de pronostics
+            quotidiennes ; aucune sélection n’est attribuée à ces sites sans vérification sur leur page.
+          </p>
+        </>
       ) : (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', maxHeight: '300px', overflowY: 'auto' }}>
-          {timestampedPredictions.map((p, idx) => (
-            <div key={idx} style={{ background: 'var(--panel)', padding: '12px 16px', borderRadius: '8px', border: '1px solid var(--line)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '13px' }}>
-              <div>
-                <strong>{p.homeTeam} vs {p.awayTeam}</strong>
-                <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Horodatage : {new Date(p.timestamp).toLocaleString()}</div>
-              </div>
-              <div style={{ textAlign: 'right' }}>
-                <span style={{ color: 'var(--success)', fontWeight: 'bold' }}>{p.predictedWinner}</span>
-                <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Confiance : {p.confidence}%</div>
-              </div>
-            </div>
-          ))}
-        </div>
+        <div className="message">Aucun match n’est disponible pour l’instant.</div>
       )}
     </div>
   );

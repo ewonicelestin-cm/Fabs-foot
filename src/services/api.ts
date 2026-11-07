@@ -5,9 +5,8 @@ import {
   CompetitionContext,
   AnalyzedMatch,
   News,
+  OfficialMatchData,
 } from "../types";
-
-export const API = "https://www.thesportsdb.com/api/v1/json/3";
 
 /**
  * GENERATE DYNAMIC NEWS
@@ -43,7 +42,7 @@ export function generateMatchNews(match: Match, home: TeamStats, away: TeamStats
   if (pred.isPremium) {
     news.push({
       title: "Opportunité Premium",
-      content: `Ce match est classé HAUTE CERTITUDE avec une cote théorique de ${pred.theoreticalOdds}.`,
+      content: "Ce match est classé à fort potentiel selon les probabilités calculées par le modèle.",
       date: now
     });
   }
@@ -60,6 +59,37 @@ export function emptyStats(): TeamStats {
     goalsFor: 0,
     goalsAgainst: 0,
   };
+}
+
+export async function getOfficialMatchData(): Promise<OfficialMatchData> {
+  const response = await fetch(`${import.meta.env.BASE_URL}data/official-matches.json`, {
+    cache: "no-store",
+  });
+  if (!response.ok) {
+    throw new Error(`Impossible de charger les données officielles (${response.status}).`);
+  }
+
+  const data: unknown = await response.json();
+  if (
+    !data ||
+    typeof data !== "object" ||
+    !("matches" in data) ||
+    !Array.isArray(data.matches) ||
+    !("teamStats" in data) ||
+    !data.teamStats ||
+    typeof data.teamStats !== "object" ||
+    !("sources" in data) ||
+    !Array.isArray(data.sources)
+  ) {
+    throw new Error("Le fichier des données officielles a un format invalide.");
+  }
+
+  return data as OfficialMatchData;
+}
+
+export function getSnapshotTeamStats(data: OfficialMatchData, teamName: string): TeamStats {
+  const normalized = teamName.trim().toLocaleLowerCase();
+  return data.teamStats[normalized] ?? emptyStats();
 }
 
 export function getForm(stats: TeamStats): number {
@@ -202,34 +232,18 @@ function poisson(lambda: number, k: number): number {
 }
 
 export function analyzeMatch(home: TeamStats, away: TeamStats): Prediction {
-  if (home.played === 0 || away.played === 0) {
-    return {
-      winner: "Nul",
-      confidence: 50,
-      valueScore: 50,
-      marketLabel: "DONNÉES INSUFFISANTES",
-      isPremium: false,
-      theoreticalOdds: 2.0,
-      doubleChance: "1X / X2",
-      btts: "Non",
-      over15: "Non",
-      over25: "Non",
-      under35: "Oui",
-      score: "1-1",
-      recommendation: "Analyse indisponible : données insuffisantes",
-      probabilities: { home: 33, draw: 34, away: 33 }
-    };
-  }
+  const dataBasis = home.played > 0 && away.played > 0
+    ? "verified"
+    : home.played > 0 || away.played > 0
+      ? "partial"
+      : "fallback";
+  const homeForm = home.played > 0 ? getForm(home) : 50;
+  const awayForm = away.played > 0 ? getForm(away) : 50;
 
-  const homeForm = getForm(home);
-  const awayForm = getForm(away);
-
-  // 1. Calculate Lambda (Expected Goals) using a multi-factor weighting system
-  // Baseline attack/defense stats
-  const homeAvgScored = home.played > 0 ? home.goalsFor / home.played : 1.3;
-  const homeAvgConceded = home.played > 0 ? home.goalsAgainst / home.played : 1.2;
-  const awayAvgScored = away.played > 0 ? away.goalsFor / away.played : 1.1;
-  const awayAvgConceded = away.played > 0 ? away.goalsAgainst / away.played : 1.4;
+  const homeAvgScored = home.played > 0 ? home.goalsFor / home.played : 1.25;
+  const homeAvgConceded = home.played > 0 ? home.goalsAgainst / home.played : 1.25;
+  const awayAvgScored = away.played > 0 ? away.goalsFor / away.played : 1.25;
+  const awayAvgConceded = away.played > 0 ? away.goalsAgainst / away.played : 1.25;
 
   // Form adjustment factor (recent performance impact)
   const formImpactHome = 1 + (homeForm - 50) / 200;
@@ -300,9 +314,9 @@ export function analyzeMatch(home: TeamStats, away: TeamStats): Prediction {
   );
 
   const marketLabel =
-    valueScore >= 88 ? "HAUTE CERTITUDE" :
-    valueScore >= 78 ? "Cote forte" :
-    "Cote standard";
+    valueScore >= 88 ? "POTENTIEL ÉLEVÉ" :
+    valueScore >= 78 ? "Potentiel favorable" :
+    "Potentiel modéré";
 
   // PREMIUM LOGIC: Automatic billing target for high value matches with odds >= 1.75
   const isPremium = (valueScore >= 78) && (theoreticalOdds >= 1.75);
@@ -320,10 +334,23 @@ export function analyzeMatch(home: TeamStats, away: TeamStats): Prediction {
 
   const intensity2H = (lambdaHome + lambdaAway) > 2.8 ? 'HAUTE' : (lambdaHome + lambdaAway) > 1.8 ? 'MODÉRÉE' : 'BASSE';
 
+  const shotsOnTargetHome = Math.round(Math.max(1, Math.min(7, lambdaHome * 3.2)));
+  const shotsOnTargetAway = Math.round(Math.max(1, Math.min(7, lambdaAway * 3.2)));
+  const cornersHome = Math.round(Math.max(2, Math.min(9, 4.7 + (lambdaHome - 1.3) * 1.2)));
+  const cornersAway = Math.round(Math.max(2, Math.min(9, 4.7 + (lambdaAway - 1.3) * 1.2)));
+  const metricProjection = (homeEstimate: number, awayEstimate: number) => ({
+    home: homeEstimate,
+    away: awayEstimate,
+    total: homeEstimate + awayEstimate,
+    rangeMin: Math.max(0, homeEstimate + awayEstimate - 2),
+    rangeMax: homeEstimate + awayEstimate + 2,
+  });
+
   return {
     winner,
     confidence,
     valueScore,
+    dataBasis,
     marketLabel,
     isPremium,
     theoreticalOdds,
@@ -347,7 +374,11 @@ export function analyzeMatch(home: TeamStats, away: TeamStats): Prediction {
     secondHalfStudy: {
       intensity: intensity2H,
       probGoals: Math.round(55 + (intensity2H === 'HAUTE' ? 20 : 0))
-    }
+    },
+    metricProjections: {
+      shotsOnTarget: metricProjection(shotsOnTargetHome, shotsOnTargetAway),
+      corners: metricProjection(cornersHome, cornersAway),
+    },
   };
 }
 
@@ -360,51 +391,6 @@ export function getPremiumCombo(matches: AnalyzedMatch[]): AnalyzedMatch[] {
     .filter(m => m.prediction.isPremium)
     .sort((a, b) => b.prediction.valueScore - a.prediction.valueScore)
     .slice(0, 3); // Top 3 matches for a premium parlay
-}
-
-export async function getTeamStats(teamName: string): Promise<TeamStats> {
-  try {
-    const searchUrl = `${API}/searchteams.php?t=${encodeURIComponent(
-      teamName
-    )}`;
-    const searchResponse = await fetch(searchUrl);
-    if (!searchResponse.ok) return emptyStats();
-    const searchData = await searchResponse.json();
-    const team = searchData.teams?.[0];
-
-    if (!team?.idTeam) return emptyStats();
-
-    const eventsUrl = `${API}/eventslast.php?id=${team.idTeam}`;
-    const eventsResponse = await fetch(eventsUrl);
-    if (!eventsResponse.ok) return emptyStats();
-    const eventsData = await eventsResponse.json();
-    const events = eventsData.results ?? [];
-
-    const stats = emptyStats();
-    for (const event of events.slice(0, 10)) {
-      if (event.intHomeScore === null || event.intAwayScore === null) continue;
-      const homeScore = Number(event.intHomeScore);
-      const awayScore = Number(event.intAwayScore);
-      if (Number.isNaN(homeScore) || Number.isNaN(awayScore)) continue;
-
-      const isHome =
-        event.strHomeTeam?.toLowerCase().trim() ===
-        teamName.toLowerCase().trim();
-      const scored = isHome ? homeScore : awayScore;
-      const conceded = isHome ? awayScore : homeScore;
-
-      stats.played++;
-      stats.goalsFor += scored;
-      stats.goalsAgainst += conceded;
-
-      if (scored > conceded) stats.wins++;
-      else if (scored === conceded) stats.draws++;
-      else stats.losses++;
-    }
-    return stats;
-  } catch {
-    return emptyStats();
-  }
 }
 
 /**
@@ -425,109 +411,4 @@ export function getFlagUrl(countryName?: string): string | null {
   const code = COUNTRY_CODES[countryName];
   if (!code) return `https://flagcdn.com/w40/${countryName.toLowerCase().slice(0, 2)}.png`; // Fallback
   return `https://flagcdn.com/w40/${code}.png`;
-}
-
-/**
- * EXTENDED LEAGUE LIST - Maximum coverage for variety and diversity
- * Includes Major, Minor, 1st, 2nd, and 3rd divisions.
- */
-const TARGET_LEAGUES = [
-  // Major European
-  "4328", "4331", "4332", "4334", "4335", "4401", "4337", "4344",
-  // Northern & Central Europe (Norway, Switzerland, Poland, Denmark, etc.)
-  "4355", "4356", "4351", "4354", "4358", "4359", "4338", "4330", "4347", "4406", "4357",
-  // Minor & Lower Divisions (2nd, 3rd divisions)
-  "4329", "4346", "4350", "4394", "4340", "4339",
-  // World Leagues (Diversity)
-  "4422", "4352", "4403", "4399", "4424", "4429", "4415", "4416",
-  // Adding more specific countries requested
-  "4406", // Iceland
-  "4347", // Ireland Premier
-  "4355", // Norway Eliteserien
-  "4381", // Norway 1. Division
-  "4356", // Switzerland Super League
-  "4391", // Switzerland Challenge League
-  "4351", // Poland Ekstraklasa
-  "4411", // Poland 1. Liga
-  "4354", // Denmark Superliga
-  "4407", // Denmark 1. Division
-];
-
-// Simple cache for league countries
-const leagueCountryCache: Record<string, string> = {
-  "4328": "England", "4329": "England", "4330": "Scotland", "4331": "Germany",
-  "4332": "Italy", "4334": "France", "4335": "Spain", "4336": "Spain",
-  "4337": "Netherlands", "4338": "Belgium", "4339": "Turkey", "4340": "Greece",
-  "4344": "Portugal", "4346": "USA", "4347": "Ireland", "4350": "USA",
-  "4351": "Poland", "4352": "Japan", "4354": "Denmark", "4355": "Norway",
-  "4356": "Switzerland", "4357": "Russia", "4358": "Austria", "4359": "Sweden",
-  "4381": "Norway", "4391": "Switzerland", "4394": "England", "4399": "Brazil",
-  "4401": "France", "4403": "USA", "4406": "Iceland", "4407": "Denmark",
-  "4411": "Poland", "4415": "Australia", "4416": "Australia", "4422": "Argentina",
-  "4424": "Brazil", "4429": "Argentina"
-};
-
-export async function getTodayMatches(): Promise<Match[]> {
-  const today = new Date().toISOString().slice(0, 10);
-  const tomorrow = new Date(Date.now() + 86400000).toISOString().slice(0, 10);
-
-  const allMatches: Match[] = [];
-  const seenIds = new Set<string>();
-
-  try {
-    // 1. Primary Source: Daily events endpoint
-    const dailyUrl = `${API}/eventsday.php?d=${today}&s=Soccer`;
-    const dailyRes = await fetch(dailyUrl);
-    if (dailyRes.ok) {
-      const data = await dailyRes.json();
-      (data.events ?? []).forEach((e: any) => {
-        if (e.idEvent && !seenIds.has(e.idEvent)) {
-          const match: Match = {
-            ...e,
-            strCountry: e.strCountry || leagueCountryCache[e.idLeague] || "International"
-          };
-          allMatches.push(match);
-          seenIds.add(e.idEvent);
-        }
-      });
-    }
-
-    // 2. Secondary Source: Parallel league-specific scraping (UNLIMITED REACH)
-    const scraperPromises = TARGET_LEAGUES.map(async (id) => {
-      try {
-        const leagueUrl = `${API}/eventsnextleague.php?id=${id}`;
-        const res = await fetch(leagueUrl);
-        if (res.ok) {
-          const data = await res.json();
-          return (data.events ?? []).map((e: any) => ({
-            ...e,
-            strCountry: e.strCountry || leagueCountryCache[id] || "International"
-          })) as Match[];
-        }
-      } catch { return []; }
-      return [];
-    });
-
-    const scrapedResults = await Promise.all(scraperPromises);
-    scrapedResults.flat().forEach((e) => {
-      if (e && e.idEvent && !seenIds.has(e.idEvent)) {
-        if (e.dateEvent === today || e.dateEvent === tomorrow) {
-          allMatches.push(e);
-          seenIds.add(e.idEvent);
-        }
-      }
-    });
-
-    return allMatches
-      .filter(m => m.strHomeTeam && m.strAwayTeam)
-      .sort((a, b) => {
-        if (a.dateEvent === today && b.dateEvent !== today) return -1;
-        if (a.dateEvent !== today && b.dateEvent === today) return 1;
-        return (a.strTime || "").localeCompare(b.strTime || "");
-      });
-
-  } catch (err) {
-    console.error("Discovery error:", err);
-    return [];
-  }
 }

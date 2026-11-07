@@ -1,8 +1,8 @@
 import { useEffect, useState, useCallback } from "react";
 import { AnalyzedMatch } from "./types";
 import {
-  getTodayMatches,
-  getTeamStats,
+  getOfficialMatchData,
+  getSnapshotTeamStats,
   deriveCompetitionContext,
   analyzeMatch,
   getMatchPriorityScore,
@@ -17,6 +17,7 @@ import { Navigation, RubricId } from "./components/Navigation";
 import { PronosticsCenter } from "./components/PronosticsCenter";
 import { PersonalSpace } from "./components/PersonalSpace";
 import { PredictionComparator } from "./components/PredictionComparator";
+import { getMatchStatusCategory } from "./services/matchStatus";
 import { Search, Trophy, Zap, Cpu, BarChart2, ListOrdered, Calendar as CalendarIcon, Radio, History as HistoryIcon, Target, Star, UserCheck, Scale } from "lucide-react";
 
 function App() {
@@ -25,6 +26,7 @@ function App() {
   const [error, setError] = useState("");
   const [selected, setSelected] = useState<AnalyzedMatch | null>(null);
   const [lastUpdated, setLastUpdated] = useState<string>("");
+  const [coverageNotice, setCoverageNotice] = useState<string>("");
   const [darkMode, setDarkMode] = useState<boolean>(true);
   const [activeRubric, setActiveRubric] = useState<RubricId>("accueil");
   const [searchQuery, setSearchQuery] = useState<string>("");
@@ -134,14 +136,22 @@ function App() {
       if (!isAutoRefresh) setLoading(true);
       setError("");
 
-      const fixtures = await getTodayMatches();
+      const officialData = await getOfficialMatchData();
+      if (!officialData.updatedAt) {
+        throw new Error("Aucune collecte officielle n’a encore été publiée.");
+      }
+      const fixtures = officialData.matches;
+      const unavailableSources = officialData.sources.filter((source) => source.status !== "ok");
+      setCoverageNotice(
+        unavailableSources.length
+          ? `Couverture partielle : données vérifiées indisponibles pour ${unavailableSources.map((source) => source.label).join(", ")}.`
+          : ""
+      );
       const rankedMatches: AnalyzedMatch[] = [];
 
       for (const match of fixtures) {
-        const [home, away] = await Promise.all([
-          getTeamStats(match.strHomeTeam),
-          getTeamStats(match.strAwayTeam),
-        ]);
+        const home = getSnapshotTeamStats(officialData, match.strHomeTeam);
+        const away = getSnapshotTeamStats(officialData, match.strAwayTeam);
 
         const competition = deriveCompetitionContext(
           match.strHomeTeam,
@@ -170,10 +180,10 @@ function App() {
       );
 
       setMatches(finalMatches);
-      setLastUpdated(new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
+      setLastUpdated(new Date(officialData.updatedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
     } catch (err) {
       console.error(err);
-      setError("Les matchs ne peuvent pas être chargés actuellement.");
+      setError(err instanceof Error ? err.message : "Les matchs ne peuvent pas être chargés actuellement.");
     } finally {
       if (!isAutoRefresh) setLoading(false);
     }
@@ -264,17 +274,21 @@ function App() {
       }
 
       case "live": {
+        const liveMatches = matches.filter(
+          (item) => getMatchStatusCategory(item.match) === "live"
+        );
+
         return (
           <div className="rubric-view">
             <div className="rubric-view-header">
               <h2><Radio size={22} className="text-success" /> Matchs en Direct & En Cours</h2>
               <p>Suivi en temps réel des rencontres internationales et des scores actualisés.</p>
             </div>
-            {matches.length === 0 ? (
+            {liveMatches.length === 0 ? (
               <div className="message">Aucun match en direct pour l'instant.</div>
             ) : (
               <section className="prediction-grid">
-                {matches.map((item) => (
+                {liveMatches.map((item) => (
                   <MatchCard key={item.match.idEvent} item={item} onSelect={handleSelectMatch} isFavorite={favorites.includes(item.match.idEvent)} onToggleFavorite={toggleFavorite} />
                 ))}
               </section>
@@ -324,36 +338,55 @@ function App() {
       }
 
       case "comparateur": {
-        return <PredictionComparator matches={matches} onSelect={handleSelectMatch} />;
+        return <PredictionComparator matches={matches} onSelect={handleSelectMatch} lastUpdated={lastUpdated} />;
       }
 
       case "analyse-ia": {
         return (
           <div className="rubric-view">
             <div className="rubric-view-header">
-              <h2><Cpu size={22} /> Analyse IA & Modèle Prédictif</h2>
-              <p>Algorithme probabiliste basé sur la loi de Poisson, la forme pondérée et les expected goals (xG).</p>
+              <h2><Cpu size={22} /> Pronostic IA exclusif</h2>
+              <p>Pronostics calculés par Fab’s Foot à partir des résultats récents ; les matchs sans historique utilisent une estimation de secours explicitement signalée.</p>
             </div>
             <div className="stat-card" style={{ padding: '25px', marginBottom: '20px' }}>
-              <h3 style={{ marginTop: 0, color: 'var(--primary)' }}>🧠 Fonctionnement du Moteur IA</h3>
+              <h3 style={{ marginTop: 0, color: 'var(--primary)' }}>Fonctionnement du modèle</h3>
               <p style={{ color: 'var(--text-soft)', lineHeight: '1.6' }}>
-                Fab's Foot IA analyse l'historique des 10 derniers matchs de chaque équipe, pondère l'avantage à domicile (+15% d'efficacité offensive), calcule les moyennes de buts marqués et encaissés, puis simule la matrice de probabilités exactes.
+                Le modèle utilise les résultats récents disponibles, les buts marqués et encaissés, puis estime les probabilités avec une loi de Poisson et un avantage domicile. Sans historique, il utilise une base neutre et réduit la fiabilité affichée.
               </p>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '15px', marginTop: '20px' }}>
-                <div style={{ background: 'rgba(0,0,0,0.2)', padding: '15px', borderRadius: '10px' }}>
-                  <strong>🎯 Précision Globale</strong>
-                  <p style={{ fontSize: '24px', margin: '10px 0 0', color: 'var(--success)' }}>78.4%</p>
-                </div>
-                <div style={{ background: 'rgba(0,0,0,0.2)', padding: '15px', borderRadius: '10px' }}>
-                  <strong>📊 Matchs Analysés</strong>
-                  <p style={{ fontSize: '24px', margin: '10px 0 0', color: 'var(--primary)' }}>{matches.length * 12}</p>
-                </div>
-                <div style={{ background: 'rgba(0,0,0,0.2)', padding: '15px', borderRadius: '10px' }}>
-                  <strong>⚡ Fiabilité Value</strong>
-                  <p style={{ fontSize: '24px', margin: '10px 0 0', color: '#0ea5e9' }}>Haute</p>
-                </div>
-              </div>
             </div>
+            {matches.length ? (
+              <section className="prediction-grid">
+                {matches.map((item) => (
+                  <div className="ai-projected-match" key={item.match.idEvent}>
+                    <MatchCard
+                      item={item}
+                      onSelect={handleSelectMatch}
+                      isFavorite={favorites.includes(item.match.idEvent)}
+                      onToggleFavorite={toggleFavorite}
+                    />
+                    {item.prediction.dataBasis !== "verified" && (
+                      <div className="metric-projections unavailable">
+                        Estimation IA de secours : historiques {item.prediction.dataBasis === "partial" ? "partiels" : "absents"} pour ce match. Pronostic indicatif, non confirmé par des statistiques récentes complètes.
+                      </div>
+                    )}
+                    {item.prediction.metricProjections && (
+                      <div className="metric-projections">
+                        <strong>Projections IA · tirs cadrés & corners</strong>
+                        <span>
+                          Tirs cadrés : {item.prediction.metricProjections.shotsOnTarget.home}–{item.prediction.metricProjections.shotsOnTarget.away}
+                          {" · "}Corners : {item.prediction.metricProjections.corners.home}–{item.prediction.metricProjections.corners.away}
+                        </span>
+                        <small>
+                          Estimations basées sur les buts et la forme récents ; aucun chiffre de match en direct.
+                        </small>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </section>
+            ) : (
+              <div className="message">Aucun match officiel n’est publié pour le moment. Les pronostics IA apparaîtront dès qu’une rencontre sera disponible.</div>
+            )}
           </div>
         );
       }
@@ -369,8 +402,8 @@ function App() {
               {matches.map((item) => (
                 <div key={item.match.idEvent} className="stat-card" style={{ padding: '20px' }}>
                   <strong>{item.match.strHomeTeam} vs {item.match.strAwayTeam}</strong>
-                  <div className="stat-row"><span>Forme Domicile :</span> <strong>{getForm(item.home)}%</strong></div>
-                  <div className="stat-row"><span>Forme Extérieur :</span> <strong>{getForm(item.away)}%</strong></div>
+                  <div className="stat-row"><span>Forme Domicile :</span> <strong>{item.home.played ? `${getForm(item.home)}%` : "N/D"}</strong></div>
+                  <div className="stat-row"><span>Forme Extérieur :</span> <strong>{item.away.played ? `${getForm(item.away)}%` : "N/D"}</strong></div>
                   <div className="stat-row"><span>Buts Domicile (Total) :</span> <strong>{item.home.goalsFor}</strong></div>
                   <div className="stat-row"><span>Buts Extérieur (Total) :</span> <strong>{item.away.goalsFor}</strong></div>
                 </div>
@@ -385,12 +418,12 @@ function App() {
           <div className="rubric-view">
             <div className="rubric-view-header">
               <h2><ListOrdered size={22} /> Classements & Groupes</h2>
-              <p>État des groupes des éliminatoires et championnats en cours.</p>
+              <p>Les classements officiels ne sont affichés que lorsqu’ils sont disponibles dans une source vérifiée.</p>
             </div>
             <div className="stat-card" style={{ padding: '25px', textAlign: 'center' }}>
-              <p style={{ color: 'var(--text-muted)' }}>Les classements officiels des phases de groupes (Ligue des Nations & Qualifications CAN) sont synchronisés en direct avec les résultats des rencontres affichées.</p>
+              <p style={{ color: 'var(--text-muted)' }}>Les classements ne sont pas encore disponibles dans ce jeu de données. Les statistiques d’équipe sont calculées uniquement à partir de résultats officiels vérifiés.</p>
               <div style={{ marginTop: '20px' }}>
-                <span className="status-badge">🟢 Synchronisé avec l'API Sportive</span>
+                <span className="status-badge">🟢 Sources officielles • mise à jour {lastUpdated || "en attente"}</span>
               </div>
             </div>
           </div>
@@ -466,7 +499,7 @@ function App() {
                   <strong style={{ display: 'block', margin: '12px 0' }}>{item.match.strHomeTeam} vs {item.match.strAwayTeam}</strong>
                   <div className="stat-row"><span>Pronostic IA :</span> <strong style={{ color: 'var(--success)' }}>{item.prediction.winner}</strong></div>
                   <div className="stat-row"><span>Indice de Confiance :</span> <strong>{item.prediction.confidence}%</strong></div>
-                  <div className="stat-row"><span>Source des Données :</span> <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>API TheSportsDB (Historique 10 matchs)</span></div>
+                  <div className="stat-row"><span>Source des Données :</span> <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Résultats officiels disponibles</span></div>
                 </div>
               ))}
             </div>
@@ -511,6 +544,7 @@ function App() {
       <Navigation activeRubric={activeRubric} onSelectRubric={setActiveRubric} />
 
       <main className="container">
+        {coverageNotice && <div className="message" role="status">{coverageNotice}</div>}
         {renderRubricContent()}
       </main>
 

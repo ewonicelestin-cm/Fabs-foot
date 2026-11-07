@@ -1,6 +1,7 @@
 import React from "react";
 import { AnalyzedMatch } from "../types";
 import { getForm, getFlagUrl } from "../services/api";
+import { getActualMatchScore, getActualMatchScoreLabel, getMatchStatusCategory, getMatchStatusLabel } from "../services/matchStatus";
 import { Info, Star } from "lucide-react";
 
 interface MatchCardProps {
@@ -12,7 +13,11 @@ interface MatchCardProps {
 
 export const MatchCard: React.FC<MatchCardProps> = ({ item, onSelect, isFavorite, onToggleFavorite }) => {
   const p = item.prediction;
+  const homeForm = item.home.played > 0 ? `${getForm(item.home)}%` : "N/D";
+  const awayForm = item.away.played > 0 ? `${getForm(item.away)}%` : "N/D";
   const flag = getFlagUrl(item.match.strCountry);
+  const statusCategory = getMatchStatusCategory(item.match);
+  const actualScore = getActualMatchScore(item.match);
 
   const cardTone =
     p.valueScore >= 85 ? "hot" : p.valueScore >= 75 ? "strong" : "normal";
@@ -42,8 +47,8 @@ export const MatchCard: React.FC<MatchCardProps> = ({ item, onSelect, isFavorite
               />
             </button>
           )}
-          <span className={`status-pill ${item.match.strStatus === 'Match Finished' ? 'finished' : 'upcoming'}`}>
-            {item.match.strStatus === 'Match Finished' ? 'Terminé' : 'À venir'}
+          <span className={`status-pill ${statusCategory}`}>
+            {getMatchStatusLabel(item.match)}
           </span>
         </div>
       </div>
@@ -61,6 +66,13 @@ export const MatchCard: React.FC<MatchCardProps> = ({ item, onSelect, isFavorite
         <span>VS</span>
         <strong>{item.match.strAwayTeam}</strong>
       </div>
+
+      {actualScore && (
+        <div className="actual-match-score" aria-label={`${getActualMatchScoreLabel(item.match)} : ${actualScore}`}>
+          <span>{getActualMatchScoreLabel(item.match)}</span>
+          <strong>{actualScore}</strong>
+        </div>
+      )}
 
       <div className="confidence">
         <strong>{p.valueScore}</strong>
@@ -90,7 +102,7 @@ export const MatchCard: React.FC<MatchCardProps> = ({ item, onSelect, isFavorite
           <strong>{p.winner}</strong>
         </div>
         <div>
-          <small>SCORE</small>
+          <small>SCORE PRÉDIT</small>
           <strong>{p.score}</strong>
         </div>
       </div>
@@ -121,14 +133,19 @@ export const MatchCard: React.FC<MatchCardProps> = ({ item, onSelect, isFavorite
       <div className="form">
         <div>
           <strong>{item.match.strHomeTeam}</strong>
-          <span>Forme {getForm(item.home)}%</span>
+          <span>Forme {homeForm}</span>
         </div>
         <div>
           <strong>{item.match.strAwayTeam}</strong>
-          <span>Forme {getForm(item.away)}%</span>
+          <span>Forme {awayForm}</span>
         </div>
       </div>
 
+      {p.dataBasis !== "verified" && (
+        <div className="prediction-data-notice">
+          Estimation IA de secours · historique {p.dataBasis === "partial" ? "partiel" : "non disponible"}
+        </div>
+      )}
       <div className="recommendation">🤖 {p.recommendation}</div>
 
       <div className="competition-insight">

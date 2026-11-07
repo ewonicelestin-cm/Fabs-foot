@@ -1,0 +1,601 @@
+{
+  "updatedAt": "2026-11-07T00:12:42.270967+00:00",
+  "coverage": "partial",
+  "sources": [
+    {
+      "id": "premier-league",
+      "label": "Premier League",
+      "url": "https://www.premierleague.com/",
+      "status": "ok",
+      "matchCount": 9
+    },
+    {
+      "id": "laliga",
+      "label": "LaLiga",
+      "url": "https://www.laliga.com/en-GB/laliga-easports/results",
+      "status": "ok",
+      "matchCount": 9
+    },
+    {
+      "id": "bundesliga",
+      "label": "Bundesliga",
+      "url": "https://www.bundesliga.com/en/bundesliga/matchday",
+      "status": "ok",
+      "matchCount": 8
+    },
+    {
+      "id": "ligue-1",
+      "label": "Ligue 1",
+      "url": "https://ligue1.com/en/competitions/ligue1-mcdonalds/fixtures-results",
+      "status": "no_public_match_data",
+      "matchCount": 0,
+      "detail": "La page ne publie pas de matchs lisibles dans les données structurées."
+    },
+    {
+      "id": "serie-a",
+      "label": "Serie A",
+      "url": "https://en.legaseriea.it/serie-a",
+      "status": "no_public_match_data",
+      "matchCount": 0,
+      "detail": "La page ne publie pas de matchs lisibles dans les données structurées."
+    },
+    {
+      "id": "fifa-world-cup",
+      "label": "Coupe du monde FIFA",
+      "url": "https://www.fifa.com/en/tournaments/mens/worldcup/canadamexicousa2026/match-center",
+      "status": "no_public_match_data",
+      "matchCount": 0,
+      "detail": "La page ne publie pas de matchs lisibles dans les données structurées."
+    },
+    {
+      "id": "fifa-world-cup-qualifiers",
+      "label": "Qualifications Coupe du monde FIFA",
+      "url": "https://www.fifa.com/en/tournaments/mens/worldcup/canadamexicousa2026/qualifiers",
+      "status": "no_public_match_data",
+      "matchCount": 0,
+      "detail": "La page ne publie pas de matchs lisibles dans les données structurées."
+    },
+    {
+      "id": "euro-qualifiers",
+      "label": "Qualifications Euro",
+      "url": "https://www.uefa.com/european-qualifiers/fixtures-results/",
+      "status": "no_public_match_data",
+      "matchCount": 0,
+      "detail": "La page ne publie pas de matchs lisibles dans les données structurées."
+    },
+    {
+      "id": "uefa-nations-league",
+      "label": "UEFA Nations League",
+      "url": "https://www.uefa.com/uefanationsleague/fixtures-results/",
+      "status": "no_public_match_data",
+      "matchCount": 0,
+      "detail": "La page ne publie pas de matchs lisibles dans les données structurées."
+    },
+    {
+      "id": "afcon",
+      "label": "Coupe d’Afrique des Nations",
+      "url": "https://www.cafonline.com/afcon2025/",
+      "status": "no_public_match_data",
+      "matchCount": 0,
+      "detail": "La page ne publie pas de matchs lisibles dans les données structurées."
+    },
+    {
+      "id": "copa-america",
+      "label": "Copa América",
+      "url": "https://copaamerica.com/en/",
+      "status": "no_public_match_data",
+      "matchCount": 0,
+      "detail": "La page ne publie pas de matchs lisibles dans les données structurées."
+    },
+    {
+      "id": "gold-cup",
+      "label": "Gold Cup",
+      "url": "https://www.concacaf.com/",
+      "status": "no_public_match_data",
+      "matchCount": 0,
+      "detail": "La page ne publie pas de matchs lisibles dans les données structurées."
+    },
+    {
+      "id": "asian-cup",
+      "label": "Coupe d’Asie AFC",
+      "url": "https://www.the-afc.com/en/",
+      "status": "unavailable",
+      "matchCount": 0,
+      "detail": "HTTP Error 404: Not Found"
+    }
+  ],
+  "matches": [
+    {
+      "idEvent": "pl-129019",
+      "strHomeTeam": "Leeds United",
+      "strAwayTeam": "Tottenham Hotspur",
+      "dateEvent": "2026-11-07",
+      "strTime": "12:30 UTC",
+      "strCompetition": "Premier League",
+      "strLeague": "Premier League",
+      "strCountry": "England",
+      "strStatus": "Not Started",
+      "intHomeScore": null,
+      "intAwayScore": null,
+      "sourceUrl": "https://www.premierleague.com/"
+    },
+    {
+      "idEvent": "laliga-2026-11-07T13:00:00+00:00-Málaga CF-R. Racing Club",
+      "strHomeTeam": "Málaga CF",
+      "strAwayTeam": "R. Racing Club",
+      "dateEvent": "2026-11-07",
+      "strTime": "13:00 UTC",
+      "strCompetition": "LaLiga",
+      "strLeague": "LaLiga",
+      "strCountry": "",
+      "strStatus": "Not Started",
+      "sourceUrl": "https://www.laliga.com/en-GB/laliga-easports/results"
+    },
+    {
+      "idEvent": "bundesliga-2026-11-07T14:30:00+00:00-SC Paderborn 07-Eintracht Frankfurt",
+      "strHomeTeam": "SC Paderborn 07",
+      "strAwayTeam": "Eintracht Frankfurt",
+      "dateEvent": "2026-11-07",
+      "strTime": "14:30 UTC",
+      "strCompetition": "Bundesliga",
+      "strLeague": "Bundesliga",
+      "strCountry": "",
+      "strStatus": "Not Started",
+      "sourceUrl": "https://www.bundesliga.com/en/bundesliga/matchday"
+    },
+    {
+      "idEvent": "bundesliga-2026-11-07T14:30:00+00:00-1. FSV Mainz 05-FC Bayern München",
+      "strHomeTeam": "1. FSV Mainz 05",
+      "strAwayTeam": "FC Bayern München",
+      "dateEvent": "2026-11-07",
+      "strTime": "14:30 UTC",
+      "strCompetition": "Bundesliga",
+      "strLeague": "Bundesliga",
+      "strCountry": "",
+      "strStatus": "Not Started",
+      "sourceUrl": "https://www.bundesliga.com/en/bundesliga/matchday"
+    },
+    {
+      "idEvent": "bundesliga-2026-11-07T14:30:00+00:00-RB Leipzig-FC Augsburg",
+      "strHomeTeam": "RB Leipzig",
+      "strAwayTeam": "FC Augsburg",
+      "dateEvent": "2026-11-07",
+      "strTime": "14:30 UTC",
+      "strCompetition": "Bundesliga",
+      "strLeague": "Bundesliga",
+      "strCountry": "",
+      "strStatus": "Not Started",
+      "sourceUrl": "https://www.bundesliga.com/en/bundesliga/matchday"
+    },
+    {
+      "idEvent": "bundesliga-2026-11-07T14:30:00+00:00-Borussia Dortmund-SV Elversberg",
+      "strHomeTeam": "Borussia Dortmund",
+      "strAwayTeam": "SV Elversberg",
+      "dateEvent": "2026-11-07",
+      "strTime": "14:30 UTC",
+      "strCompetition": "Bundesliga",
+      "strLeague": "Bundesliga",
+      "strCountry": "",
+      "strStatus": "Not Started",
+      "sourceUrl": "https://www.bundesliga.com/en/bundesliga/matchday"
+    },
+    {
+      "idEvent": "pl-129013",
+      "strHomeTeam": "Arsenal",
+      "strAwayTeam": "Hull City",
+      "dateEvent": "2026-11-07",
+      "strTime": "15:00 UTC",
+      "strCompetition": "Premier League",
+      "strLeague": "Premier League",
+      "strCountry": "England",
+      "strStatus": "Not Started",
+      "intHomeScore": null,
+      "intAwayScore": null,
+      "sourceUrl": "https://www.premierleague.com/"
+    },
+    {
+      "idEvent": "pl-129017",
+      "strHomeTeam": "Fulham",
+      "strAwayTeam": "Newcastle United",
+      "dateEvent": "2026-11-07",
+      "strTime": "15:00 UTC",
+      "strCompetition": "Premier League",
+      "strLeague": "Premier League",
+      "strCountry": "England",
+      "strStatus": "Not Started",
+      "intHomeScore": null,
+      "intAwayScore": null,
+      "sourceUrl": "https://www.premierleague.com/"
+    },
+    {
+      "idEvent": "laliga-2026-11-07T15:15:00+00:00-RCD Espanyol de Barcelona-RC Deportivo",
+      "strHomeTeam": "RCD Espanyol de Barcelona",
+      "strAwayTeam": "RC Deportivo",
+      "dateEvent": "2026-11-07",
+      "strTime": "15:15 UTC",
+      "strCompetition": "LaLiga",
+      "strLeague": "LaLiga",
+      "strCountry": "",
+      "strStatus": "Not Started",
+      "sourceUrl": "https://www.laliga.com/en-GB/laliga-easports/results"
+    },
+    {
+      "idEvent": "bundesliga-2026-11-07T17:30:00+00:00-VfB Stuttgart-SV Werder Bremen",
+      "strHomeTeam": "VfB Stuttgart",
+      "strAwayTeam": "SV Werder Bremen",
+      "dateEvent": "2026-11-07",
+      "strTime": "17:30 UTC",
+      "strCompetition": "Bundesliga",
+      "strLeague": "Bundesliga",
+      "strCountry": "",
+      "strStatus": "Not Started",
+      "sourceUrl": "https://www.bundesliga.com/en/bundesliga/matchday"
+    },
+    {
+      "idEvent": "laliga-2026-11-07T17:30:00+00:00-CA Osasuna-Athletic Club",
+      "strHomeTeam": "CA Osasuna",
+      "strAwayTeam": "Athletic Club",
+      "dateEvent": "2026-11-07",
+      "strTime": "17:30 UTC",
+      "strCompetition": "LaLiga",
+      "strLeague": "LaLiga",
+      "strCountry": "",
+      "strStatus": "Not Started",
+      "sourceUrl": "https://www.laliga.com/en-GB/laliga-easports/results"
+    },
+    {
+      "idEvent": "pl-129021",
+      "strHomeTeam": "Nottingham Forest",
+      "strAwayTeam": "Manchester City",
+      "dateEvent": "2026-11-07",
+      "strTime": "17:30 UTC",
+      "strCompetition": "Premier League",
+      "strLeague": "Premier League",
+      "strCountry": "England",
+      "strStatus": "Not Started",
+      "intHomeScore": null,
+      "intAwayScore": null,
+      "sourceUrl": "https://www.premierleague.com/"
+    },
+    {
+      "idEvent": "laliga-2026-11-07T20:00:00+00:00-Valencia CF-Real Madrid",
+      "strHomeTeam": "Valencia CF",
+      "strAwayTeam": "Real Madrid",
+      "dateEvent": "2026-11-07",
+      "strTime": "20:00 UTC",
+      "strCompetition": "LaLiga",
+      "strLeague": "LaLiga",
+      "strCountry": "",
+      "strStatus": "Not Started",
+      "sourceUrl": "https://www.laliga.com/en-GB/laliga-easports/results"
+    },
+    {
+      "idEvent": "laliga-2026-11-08T13:00:00+00:00-Elche CF-Real Betis",
+      "strHomeTeam": "Elche CF",
+      "strAwayTeam": "Real Betis",
+      "dateEvent": "2026-11-08",
+      "strTime": "13:00 UTC",
+      "strCompetition": "LaLiga",
+      "strLeague": "LaLiga",
+      "strCountry": "",
+      "strStatus": "Not Started",
+      "sourceUrl": "https://www.laliga.com/en-GB/laliga-easports/results"
+    },
+    {
+      "idEvent": "pl-129014",
+      "strHomeTeam": "Brighton & Hove Albion",
+      "strAwayTeam": "Brentford",
+      "dateEvent": "2026-11-08",
+      "strTime": "14:00 UTC",
+      "strCompetition": "Premier League",
+      "strLeague": "Premier League",
+      "strCountry": "England",
+      "strStatus": "Not Started",
+      "intHomeScore": null,
+      "intAwayScore": null,
+      "sourceUrl": "https://www.premierleague.com/"
+    },
+    {
+      "idEvent": "pl-129015",
+      "strHomeTeam": "Crystal Palace",
+      "strAwayTeam": "Liverpool",
+      "dateEvent": "2026-11-08",
+      "strTime": "14:00 UTC",
+      "strCompetition": "Premier League",
+      "strLeague": "Premier League",
+      "strCountry": "England",
+      "strStatus": "Not Started",
+      "intHomeScore": null,
+      "intAwayScore": null,
+      "sourceUrl": "https://www.premierleague.com/"
+    },
+    {
+      "idEvent": "pl-129018",
+      "strHomeTeam": "Ipswich Town",
+      "strAwayTeam": "Bournemouth",
+      "dateEvent": "2026-11-08",
+      "strTime": "14:00 UTC",
+      "strCompetition": "Premier League",
+      "strLeague": "Premier League",
+      "strCountry": "England",
+      "strStatus": "Not Started",
+      "intHomeScore": null,
+      "intAwayScore": null,
+      "sourceUrl": "https://www.premierleague.com/"
+    },
+    {
+      "idEvent": "pl-129022",
+      "strHomeTeam": "Sunderland",
+      "strAwayTeam": "Chelsea",
+      "dateEvent": "2026-11-08",
+      "strTime": "14:00 UTC",
+      "strCompetition": "Premier League",
+      "strLeague": "Premier League",
+      "strCountry": "England",
+      "strStatus": "Not Started",
+      "intHomeScore": null,
+      "intAwayScore": null,
+      "sourceUrl": "https://www.premierleague.com/"
+    },
+    {
+      "idEvent": "bundesliga-2026-11-08T14:30:00+00:00-1. FC Köln-Bayer 04 Leverkusen",
+      "strHomeTeam": "1. FC Köln",
+      "strAwayTeam": "Bayer 04 Leverkusen",
+      "dateEvent": "2026-11-08",
+      "strTime": "14:30 UTC",
+      "strCompetition": "Bundesliga",
+      "strLeague": "Bundesliga",
+      "strCountry": "",
+      "strStatus": "Not Started",
+      "sourceUrl": "https://www.bundesliga.com/en/bundesliga/matchday"
+    },
+    {
+      "idEvent": "laliga-2026-11-08T15:15:00+00:00-Real Sociedad-Rayo Vallecano",
+      "strHomeTeam": "Real Sociedad",
+      "strAwayTeam": "Rayo Vallecano",
+      "dateEvent": "2026-11-08",
+      "strTime": "15:15 UTC",
+      "strCompetition": "LaLiga",
+      "strLeague": "LaLiga",
+      "strCountry": "",
+      "strStatus": "Not Started",
+      "sourceUrl": "https://www.laliga.com/en-GB/laliga-easports/results"
+    },
+    {
+      "idEvent": "bundesliga-2026-11-08T16:30:00+00:00-Sport-Club Freiburg-1. FC Union Berlin",
+      "strHomeTeam": "Sport-Club Freiburg",
+      "strAwayTeam": "1. FC Union Berlin",
+      "dateEvent": "2026-11-08",
+      "strTime": "16:30 UTC",
+      "strCompetition": "Bundesliga",
+      "strLeague": "Bundesliga",
+      "strCountry": "",
+      "strStatus": "Not Started",
+      "sourceUrl": "https://www.bundesliga.com/en/bundesliga/matchday"
+    },
+    {
+      "idEvent": "pl-129020",
+      "strHomeTeam": "Manchester United",
+      "strAwayTeam": "Aston Villa",
+      "dateEvent": "2026-11-08",
+      "strTime": "16:30 UTC",
+      "strCompetition": "Premier League",
+      "strLeague": "Premier League",
+      "strCountry": "England",
+      "strStatus": "Not Started",
+      "intHomeScore": null,
+      "intAwayScore": null,
+      "sourceUrl": "https://www.premierleague.com/"
+    },
+    {
+      "idEvent": "laliga-2026-11-08T17:30:00+00:00-Celta-Levante UD",
+      "strHomeTeam": "Celta",
+      "strAwayTeam": "Levante UD",
+      "dateEvent": "2026-11-08",
+      "strTime": "17:30 UTC",
+      "strCompetition": "LaLiga",
+      "strLeague": "LaLiga",
+      "strCountry": "",
+      "strStatus": "Not Started",
+      "sourceUrl": "https://www.laliga.com/en-GB/laliga-easports/results"
+    },
+    {
+      "idEvent": "laliga-2026-11-08T17:30:00+00:00-Villarreal CF-Getafe CF",
+      "strHomeTeam": "Villarreal CF",
+      "strAwayTeam": "Getafe CF",
+      "dateEvent": "2026-11-08",
+      "strTime": "17:30 UTC",
+      "strCompetition": "LaLiga",
+      "strLeague": "LaLiga",
+      "strCountry": "",
+      "strStatus": "Not Started",
+      "sourceUrl": "https://www.laliga.com/en-GB/laliga-easports/results"
+    },
+    {
+      "idEvent": "bundesliga-2026-11-08T18:30:00+00:00-TSG Hoffenheim-FC Schalke 04",
+      "strHomeTeam": "TSG Hoffenheim",
+      "strAwayTeam": "FC Schalke 04",
+      "dateEvent": "2026-11-08",
+      "strTime": "18:30 UTC",
+      "strCompetition": "Bundesliga",
+      "strLeague": "Bundesliga",
+      "strCountry": "",
+      "strStatus": "Not Started",
+      "sourceUrl": "https://www.bundesliga.com/en/bundesliga/matchday"
+    },
+    {
+      "idEvent": "laliga-2026-11-08T20:00:00+00:00-Atlético de Madrid-FC Barcelona",
+      "strHomeTeam": "Atlético de Madrid",
+      "strAwayTeam": "FC Barcelona",
+      "dateEvent": "2026-11-08",
+      "strTime": "20:00 UTC",
+      "strCompetition": "LaLiga",
+      "strLeague": "LaLiga",
+      "strCountry": "",
+      "strStatus": "Not Started",
+      "sourceUrl": "https://www.laliga.com/en-GB/laliga-easports/results"
+    }
+  ],
+  "teamStats": {
+    "arsenal": {
+      "played": 9,
+      "wins": 8,
+      "draws": 0,
+      "losses": 1,
+      "goalsFor": 14,
+      "goalsAgainst": 5
+    },
+    "coventry city": {
+      "played": 10,
+      "wins": 3,
+      "draws": 0,
+      "losses": 7,
+      "goalsFor": 10,
+      "goalsAgainst": 19
+    },
+    "hull city": {
+      "played": 9,
+      "wins": 2,
+      "draws": 5,
+      "losses": 2,
+      "goalsFor": 11,
+      "goalsAgainst": 10
+    },
+    "manchester united": {
+      "played": 9,
+      "wins": 1,
+      "draws": 4,
+      "losses": 4,
+      "goalsFor": 10,
+      "goalsAgainst": 15
+    },
+    "everton": {
+      "played": 10,
+      "wins": 4,
+      "draws": 4,
+      "losses": 2,
+      "goalsFor": 12,
+      "goalsAgainst": 10
+    },
+    "crystal palace": {
+      "played": 9,
+      "wins": 2,
+      "draws": 1,
+      "losses": 6,
+      "goalsFor": 9,
+      "goalsAgainst": 21
+    },
+    "ipswich town": {
+      "played": 9,
+      "wins": 3,
+      "draws": 2,
+      "losses": 4,
+      "goalsFor": 14,
+      "goalsAgainst": 18
+    },
+    "sunderland": {
+      "played": 9,
+      "wins": 1,
+      "draws": 2,
+      "losses": 6,
+      "goalsFor": 7,
+      "goalsAgainst": 17
+    },
+    "nottingham forest": {
+      "played": 9,
+      "wins": 1,
+      "draws": 3,
+      "losses": 5,
+      "goalsFor": 6,
+      "goalsAgainst": 12
+    },
+    "leeds united": {
+      "played": 9,
+      "wins": 2,
+      "draws": 5,
+      "losses": 2,
+      "goalsFor": 9,
+      "goalsAgainst": 8
+    },
+    "brentford": {
+      "played": 9,
+      "wins": 3,
+      "draws": 5,
+      "losses": 1,
+      "goalsFor": 16,
+      "goalsAgainst": 9
+    },
+    "tottenham hotspur": {
+      "played": 9,
+      "wins": 3,
+      "draws": 3,
+      "losses": 3,
+      "goalsFor": 10,
+      "goalsAgainst": 10
+    },
+    "brighton & hove albion": {
+      "played": 9,
+      "wins": 6,
+      "draws": 1,
+      "losses": 2,
+      "goalsFor": 24,
+      "goalsAgainst": 7
+    },
+    "aston villa": {
+      "played": 9,
+      "wins": 3,
+      "draws": 3,
+      "losses": 3,
+      "goalsFor": 10,
+      "goalsAgainst": 13
+    },
+    "manchester city": {
+      "played": 9,
+      "wins": 7,
+      "draws": 0,
+      "losses": 2,
+      "goalsFor": 20,
+      "goalsAgainst": 10
+    },
+    "bournemouth": {
+      "played": 9,
+      "wins": 3,
+      "draws": 3,
+      "losses": 3,
+      "goalsFor": 14,
+      "goalsAgainst": 13
+    },
+    "newcastle united": {
+      "played": 9,
+      "wins": 3,
+      "draws": 2,
+      "losses": 4,
+      "goalsFor": 12,
+      "goalsAgainst": 15
+    },
+    "liverpool": {
+      "played": 9,
+      "wins": 4,
+      "draws": 3,
+      "losses": 2,
+      "goalsFor": 11,
+      "goalsAgainst": 9
+    },
+    "fulham": {
+      "played": 9,
+      "wins": 2,
+      "draws": 3,
+      "losses": 4,
+      "goalsFor": 9,
+      "goalsAgainst": 11
+    },
+    "chelsea": {
+      "played": 9,
+      "wins": 5,
+      "draws": 1,
+      "losses": 3,
+      "goalsFor": 19,
+      "goalsAgainst": 15
+    }
+  }
+}
